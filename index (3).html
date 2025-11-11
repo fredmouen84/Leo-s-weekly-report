@@ -1,0 +1,529 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEO’s Opportunity Snapshot Report — Offline Clean V2</title>
+<style>
+  :root{ --panel:#0B0F1E; --bg:#000; --bord:#16223D; --ink:#E7EEFF; --sub:#9fb0d0; --acc:#264a9a; --acc2:#1f3b82; --btn:#0E1A36; --btnh:#15244A; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial; }
+  body::before{ content:""; position:fixed; inset:0; z-index:-1; background:#000; opacity:0.15; pointer-events:none; }
+  header{ position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0B1022,#0a1230); border-bottom:1px solid #1f2d57; }
+  .row{ max-width:1200px; margin:0 auto; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  h1{ margin:0; font-size:26px; letter-spacing:.3px; }
+  .toolbar{ max-width:1200px; margin:8px auto 0; display:flex; align-items:center; gap:10px; padding:0 14px 10px; justify-content:space-between; }
+  .btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
+  .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
+  #totalChip{ font-weight:800; font-size:22px; color:#dbe6ff; text-shadow:0 0 8px rgba(90,140,240,.15); }
+  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; }
+  aside, main{ background:var(--panel); border:1px solid var(--bord); border-radius:14px; padding:12px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:8px; }
+  .tab{ padding:6px 10px; border:1px solid #1D2B4F; border-radius:10px; cursor:pointer; }
+  .tab.active{ background:#10204A; }
+
+  .search input, .field, textarea{
+    width:100%; box-sizing:border-box; height:36px; line-height:20px;
+    padding:8px 10px; border-radius:10px; border:1px solid #1D2B4F; background:#0A1228; color:#DDE9FF; font-size:14px;
+  }
+  textarea{ min-height:84px; height:auto; resize:vertical; line-height:1.35; }
+  label{ font-size:12px; color:var(--sub); display:block; margin:4px 0 4px; letter-spacing:.2px; }
+  input[data-field="dlop"]{ text-align:right; }
+
+  .list{ max-height: calc(100vh - 280px); overflow:auto; border-top:1px dashed var(--bord); }
+  .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
+  .list .item:hover{ background:#0E1530; }
+  .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
+  .card{ background:#0D1328; border:1px solid #1B2A4B; border-radius:14px; padding:12px; transition:transform .12s, box-shadow .12s, border-color .12s; }
+  .card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(38,74,154,.35) inset; border-color:var(--acc); cursor:pointer; }
+  .card .card-head{ background:var(--acc2); border:1px solid var(--acc); border-radius:10px; padding:8px 10px; margin:-4px -4px 10px; }
+  .card .card-head h3{ margin:0; font-size:16px; }
+
+  /* Glass bar */
+  .heatbar{ position:relative; width:100%; height:3px; border-radius:999px; background:#0b1022; border:1px solid #1D2B4F; overflow:hidden; box-shadow: inset 0 0 0 1px rgba(56,100,200,.12), 0 8px 18px rgba(0,0,0,.25); }
+  .heatbar .fill{ height:100%; width:0%; border-radius:999px; transition:width .35s ease, background-color .2s ease, box-shadow .2s ease, opacity .2s ease; }
+  .heat--prospecting .fill{ background:#3B82F6; box-shadow:0 0 10px rgba(59,130,246,.45); }
+  .heat--working .fill{ background:#FBBF24; box-shadow:0 0 10px rgba(251,191,36,.38); }
+  .heat--proposal .fill{ background:#8B5CF6; box-shadow:0 0 10px rgba(139,92,246,.42); }
+  .heat--won .fill{ background:#10B981; box-shadow:0 0 10px rgba(16,185,129,.45); }
+  .heat--lost .fill{ background:#4B5563; box-shadow:none; opacity:.45; }
+  .heatrow{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px; }
+  .heatrow .stage-tag{ font-size:15px; font-weight:800; color:#cfe0ff; }
+  .heatrow .pct-tag{ font-size:12px; color:#cfe0ff; opacity:.8; }
+
+  /* Legend */
+  .legend{ margin:10px 0 10px; border:1px solid var(--bord); background:#0b1022; border-radius:10px; padding:8px; }
+  .legend-title{ font-size:11px; color:var(--sub); margin-bottom:6px; letter-spacing:.25px; text-transform:uppercase; }
+  .legend-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; }
+  .legend-item{ display:flex; align-items:center; gap:8px; font-size:12px; color:#DDE9FF; }
+  .swatch{ width:22px; height:6px; border-radius:999px; box-shadow:0 0 6px rgba(255,255,255,.08) inset; }
+  .swatch.prospecting{ background:#3B82F6; } .swatch.working{ background:#FBBF24; }
+  .swatch.proposal{ background:#8B5CF6; } .swatch.won{ background:#10B981; } .swatch.lost{ background:#4B5563; opacity:.7; }
+
+  /* Modal */
+  #cardModal{ position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:100; opacity:0; transform:scale(0.98); transition:opacity .18s, transform .18s; }
+  #cardModal.show{ opacity:1; transform:scale(1); }
+  #cardModal .panel{ background:var(--panel); border:1px solid var(--bord); border-radius:16px; width:min(860px,92vw); max-height:86vh; overflow:auto; padding:14px; box-shadow:0 20px 50px rgba(0,0,0,.55); }
+  #cardModal .modal-bar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; position:sticky; top:0; background:linear-gradient(180deg, var(--panel) 70%, rgba(11,15,30,0)); padding-top:6px; }
+
+  .grid .add-card{ grid-column: 1 / -1; }
+  .card.add-card{ outline:1px dashed #2a3f73; background:#0c1230; padding:16px; }
+  .card.add-card .card-head h3{ font-size:18px; }
+  .add-row{ display:grid; grid-template-columns:repeat(4, minmax(160px, 1fr)); gap:10px; }
+  @media (max-width: 900px){ .add-row{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width: 560px){ .add-row{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>LEO’s Opportunity Snapshot Report</h1>
+  </div>
+  <div class="toolbar">
+    <div class="btns">
+      <button id="btnWord" class="btn" title="Export Word">Word</button>
+      <button id="btnExcel" class="btn" title="Export Excel">Excel</button>
+      <button id="btnImport" class="btn" title="Import Opportunities">Import</button>
+      <button id="btnSave" class="btn" title="Save Report">Save</button>
+      <button id="btnReset" class="btn" title="Reset to Last Save">Reset</button>
+      <button id="btnClear" class="btn" title="Clear Entire Report">Clear</button>
+    </div>
+    <span id="totalChip">Total DLOP: $0</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="tabs">
+      <div id="tab-mid" class="tab active">Mid-Atlantic</div>
+      <div id="tab-pa" class="tab">Pennsylvania</div>
+    </div>
+    <div class="search"><input id="search" placeholder="Search opportunities or notes"></div>
+    <label for="stageFilter">Filter by Stage</label>
+    <select id="stageFilter" class="field">
+      <option value="all">All</option>
+      <option value="prospecting">Prospecting</option>
+      <option value="working on">Working on</option>
+      <option value="proposal">Proposal</option>
+      <option value="win">Win</option>
+      <option value="lost">Lost</option>
+    </select>
+
+    <div class="legend" role="note" aria-label="Bar color legend">
+      <div class="legend-title">Legend</div>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="swatch prospecting"></span>Prospecting</div>
+        <div class="legend-item"><span class="swatch working"></span>Working On</div>
+        <div class="legend-item"><span class="swatch proposal"></span>Proposal</div>
+        <div class="legend-item"><span class="swatch won"></span>Win</div>
+        <div class="legend-item"><span class="swatch lost"></span>Lost</div>
+      </div>
+    </div>
+
+    <div class="list" id="list"></div>
+  </aside>
+
+  <main>
+    <div class="grid" id="cards"></div>
+  </main>
+</div>
+
+<div id="cardModal">
+  <div class="panel">
+    <div class="modal-bar">
+      <h3 style="margin:0;color:#cfe0ff">Opportunity Detail</h3>
+      <button class="btn" id="btnCloseCard">✖</button>
+    </div>
+    <div id="cardModalBody"></div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div id="impModal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:101">
+  <div style="background:#0b0f1e;border:1px solid #16223d;border-radius:16px;max-width:960px;width:100%;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">Import Opportunities</h3>
+      <button class="btn" id="impClose">✖</button>
+    </div>
+    <p style="margin:6px 0 12px 0;color:#9fb0d0">
+      Format per record:<br>
+      <code>Opportunity Name</code><br>
+      <code>Stage: Proposal Submitted</code><br>
+      <code>DLOP: $50,000.00</code><br>
+      <code>Service: Self-Park</code><br>
+      <code>Notes / Last Interaction: …</code><br>
+      <span style="opacity:.8">Blank line between records. Fields can be in any order after the name.</span>
+    </p>
+    <textarea id="impText" class="field" rows="12" placeholder="Paste opportunities here..."></textarea>
+    <div style="display:flex;gap:12px;margin-top:16px;justify-content:center;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="impPreview">Preview</button>
+      <button class="btn" id="impApply">Apply to Current Region</button>
+    </div>
+    <div id="impOut" style="margin-top:10px;font-size:13px;color:#cfe0ff;max-height:280px;overflow:auto;border:1px solid #16223d;border-radius:8px;padding:8px"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+/* ===== STATE ===== */
+const state = {
+  regions: [
+    { id: "mid", name: "Mid-Atlantic", opportunities: [
+      {"id": "op-1400k", "name": "1400 K", "stage": "Proposal Submitted", "dlop": 50000, "service": "Vehicle Services", "notes": "Example", "attachments": []},
+    ]},
+    { id: "pa",  name: "Pennsylvania", opportunities: [
+      {"id": "op-phmc", "name": "PHMC Cedar Campus", "stage": "Negotiation/Review", "dlop": 1355000, "service": "Self-Park", "notes": "Awaiting legal review", "attachments": []},
+      {"id": "op-jpm", "name": "JP Morgan", "stage": "Closed – Lost", "dlop": 0, "service": "Self-Park", "notes": "Chose incumbent", "attachments": []}
+    ]}
+  ]
+};
+let activeRegionId = "mid";
+let sidebarQuery = "";
+const LS_LAST="leos_toolbar_last", LS_PREV="leos_toolbar_prev";
+
+/* ===== Utils ===== */
+const $ = (id)=> document.getElementById(id);
+function currencyToNumber(v){ if(typeof v==="number") return v; if(!v) return 0; return parseFloat(String(v).replace(/[^\d.]/g,""))||0; }
+function numberToCurrency(n){ try{ return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}); }catch(e){ return "$"+Math.round(n).toLocaleString(); } }
+function escapeHtml(s){ return String(s||"").replace(/[&<>\"']/g, m => ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+
+/* ===== GlassBar ===== */
+function stageInfo(stageText){
+  const s = String(stageText||"").toLowerCase();
+  if (s.includes("lost"))     return { pct: 0,   cls: "heat--lost",        label: "Closed – Lost" };
+  if (s.includes("win"))      return { pct: 100, cls: "heat--won",         label: "Closed – Won" };
+  if (s.includes("proposal")) return { pct: 90,  cls: "heat--proposal",    label: "Proposal" };
+  if (s.includes("working"))  return { pct: 55,  cls: "heat--working",     label: "Working On" };
+  if (s.includes("prospect")) return { pct: 10,  cls: "heat--prospecting", label: "Prospecting" };
+  if (s.includes("negotiation") || s.includes("review")) return { pct: 85, cls: "heat--proposal", label: "Proposal / Review" };
+  return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
+}
+function applyHeatbar(rootEl, stageText){
+  const hb = rootEl.querySelector(".heatbar");
+  if(!hb) return;
+  const fill = hb.querySelector(".fill");
+  hb.className = "heatbar"; // reset
+  const info = stageInfo(stageText);
+  hb.classList.add(info.cls);
+  fill.style.width = info.pct + "%";
+  hb.setAttribute("role","progressbar");
+  hb.setAttribute("aria-valuemin","0");
+  hb.setAttribute("aria-valuemax","100");
+  hb.setAttribute("aria-valuenow", String(info.pct));
+  const pctEl = rootEl.querySelector(".pct-tag"); if(pctEl) pctEl.textContent = info.pct + "%";
+  const stEl  = rootEl.querySelector(".heatrow .stage-tag"); if(stEl) stEl.textContent = info.label;
+}
+
+/* ===== Totals ===== */
+function renderTotalsOnly(){
+  const r = state.regions.find(rr=> rr.id===activeRegionId);
+  const q = (sidebarQuery||"").toLowerCase();
+  const items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
+  const total = items.reduce((a,o)=> a + currencyToNumber(o.dlop), 0);
+  $("totalChip").textContent = "Total DLOP: " + numberToCurrency(total);
+}
+
+/* ===== Cards ===== */
+function cardHtml(o){
+  const isProposal = /proposal/i.test(String(o.stage||""));
+  return `
+    <div class="card" id="card-${o.id}">
+      <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
+      <div class="heatbar"><div class="fill"></div></div>
+      <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
+      <div class="row2" style="margin-top:6px">
+        <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
+        <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
+        <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
+        <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
+      </div>
+      <div style="margin-top:6px">
+        <label>Notes / Last Interaction</label>
+        <textarea class="field" data-field="notes" rows="3">${escapeHtml(o.notes||"")}</textarea>
+      </div>
+    </div>
+  `;
+}
+function bindCardRoot(root, o){
+  if(!root) return;
+  const toggleSubmission = ()=>{
+    const isProposal = /proposal/i.test(String(o.stage||""));
+    const subEl = root.querySelector('[data-field="submissionDate"]')?.closest('div');
+    if(subEl) subEl.style.display = isProposal ? "" : "none";
+  };
+  applyHeatbar(root, o.stage);
+  root.querySelectorAll("[data-field]").forEach(el=>{
+    const field = el.getAttribute("data-field");
+    const handler = ()=>{
+      let val = (el.tagName==="TEXTAREA" || el.tagName==="INPUT") ? el.value : el.textContent;
+      if(field==="dlop") val = currencyToNumber(val);
+      o[field] = val;
+      try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
+      renderTotalsOnly();
+      if(field==="stage"){ toggleSubmission(); applyHeatbar(root, o.stage); }
+    };
+    if(el.tagName==="TEXTAREA") el.addEventListener("input", handler);
+    else if(el.tagName==="INPUT") el.addEventListener("change", handler);
+    else el.addEventListener("input", handler);
+  });
+  toggleSubmission();
+}
+function bindInlineCard(o){
+  const root = document.getElementById("card-"+o.id);
+  bindCardRoot(root, o);
+  if(root){
+    root.addEventListener("click", (ev)=>{
+      const t = ev.target;
+      if(t.closest("input") || t.closest("textarea") || t.closest("button")) return;
+      openCardModal(o);
+    });
+  }
+}
+function cardHtmlLarge(o){
+  const isProposal = /proposal/i.test(String(o.stage||""));
+  return `
+    <div class="card card--large">
+      <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
+      <div class="heatbar"><div class="fill"></div></div>
+      <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
+      <div class="row2" style="margin-top:6px">
+        <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
+        <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
+        <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
+        <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
+      </div>
+      <div style="margin-top:6px">
+        <label>Notes / Last Interaction</label>
+        <textarea class="field" rows="8" data-field="notes">${escapeHtml(o.notes||"")}</textarea>
+      </div>
+    </div>`;
+}
+
+/* Modal open/close */
+function openCardModal(o){
+  const m = $("cardModal");
+  const body = $("cardModalBody");
+  body.innerHTML = cardHtmlLarge(o);
+  bindCardRoot(body.querySelector(".card"), o);
+  m.style.display="flex";
+  requestAnimationFrame(()=> m.classList.add("show"));
+}
+$("btnCloseCard").addEventListener("click", ()=>{
+  const m = $("cardModal"); m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180);
+});
+$("cardModal").addEventListener("click", (e)=>{
+  if(e.target.id==="cardModal"){ const m=e.currentTarget; m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180); }
+});
+
+/* New card template */
+const addCard = `
+  <div class="card add-card">
+    <div class="card-head"><h3>New Opportunity</h3></div>
+    <div class="add-row">
+      <div><label>Name</label><input class="field" id="add_name" placeholder="Opportunity name"></div>
+      <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Win / Lost"></div>
+      <div><label>DLOP</label><input class="field" id="add_dlop" placeholder="$0"></div>
+      <div><label>Service</label><input class="field" id="add_service" placeholder="Self-Park / Valet / Vehicle Services"></div>
+    </div>
+    <div style="margin-top:6px">
+      <label>Notes / Last Interaction</label>
+      <textarea class="field" id="add_notes" rows="2" placeholder="Your note..."></textarea>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn" id="add_btn">Add Opportunity</button>
+    </div>
+  </div>
+`;
+
+/* Render */
+function render(){
+  const r = state.regions.find(rr=> rr.id===activeRegionId);
+  const q = (sidebarQuery||"").toLowerCase();
+  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
+  const stageSel = $("stageFilter");
+  if(stageSel && stageSel.value !== "all"){
+    const sel = stageSel.value.toLowerCase();
+    items = items.filter(o => {
+      const st = String(o.stage||"").toLowerCase();
+      if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+      if(sel === "lost") return st.includes("lost");
+      if(sel === "win") return st.includes("win");
+      return st === sel;
+    });
+  }
+  // Sidebar
+  $("list").innerHTML = items.map(o=>`<div class="item" data-jump="${o.id}">${escapeHtml(o.name||"(no name)")}</div>`).join("");
+  $("list").querySelectorAll("[data-jump]").forEach(el=> el.addEventListener("click", ()=>{
+    const id = el.getAttribute("data-jump"); const t = document.getElementById("card-"+id);
+    if(t) t.scrollIntoView({behavior:"smooth", block:"center"});
+  }));
+  // Cards
+  const elCards = $("cards");
+  elCards.innerHTML = addCard + items.map(cardHtml).join("");
+  const addBtn = $("add_btn");
+  if(addBtn){
+    addBtn.addEventListener("click", ()=>{
+      const name = ($("add_name")||{}).value||"";
+      if(!name.trim()){ alert("Please enter a name."); return; }
+      const stage = ($("add_stage")||{}).value||"";
+      const dlopS = ($("add_dlop")||{}).value||"";
+      const service = ($("add_service")||{}).value||"";
+      const notes = ($("add_notes")||{}).value||"";
+      const dlop = (function(s){ s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; })(dlopS);
+      const r = state.regions.find(rr=> rr.id===activeRegionId);
+      const newItem = { id:"op-"+Math.random().toString(36).slice(2,9), name, stage, dlop, service, notes, attachments:[] };
+      r.opportunities.unshift(newItem);
+      try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
+      render();
+      const newEl = document.getElementById("card-"+newItem.id);
+      if(newEl) newEl.scrollIntoView({behavior:"smooth", block:"center"});
+    });
+  }
+  items.forEach(bindInlineCard);
+  renderTotalsOnly();
+}
+
+/* Toolbar actions */
+$("btnSave").addEventListener("click", ()=>{
+  try{
+    const last = localStorage.getItem(LS_LAST);
+    if(last) localStorage.setItem(LS_PREV, last);
+    localStorage.setItem(LS_LAST, JSON.stringify(state));
+    alert("Saved this report on this device.");
+  }catch(e){ alert("Unable to save."); }
+});
+$("btnReset").addEventListener("click", ()=>{
+  try{
+    const prev = localStorage.getItem(LS_PREV);
+    if(!prev){ alert("No previous snapshot found."); return; }
+    const parsed = JSON.parse(prev);
+    if(parsed && parsed.regions){ Object.assign(state, parsed); render(); alert("Restored previous snapshot."); }
+  }catch(e){ alert("Unable to reset."); }
+});
+
+function regionToRows(region){
+  return region.opportunities.map(o=>({Region:region.name, Name:o.name||"", DLOP:currencyToNumber(o.dlop)||0, Service:o.service||"", Stage:o.stage||"", Notes:(o.notes||"").replace(/\n/g," ")}));
+}
+function escapeXml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function buildHtmlTable(rows){
+  const head = '<tr><th>Region</th><th>Name</th><th>DLOP</th><th>Service</th><th>Stage</th><th>Notes</th></tr>';
+  const body = rows.map(r=> `<tr>
+    <td>${escapeXml(r.Region)}</td>
+    <td>${escapeXml(r.Name)}</td>
+    <td>${r.DLOP}</td>
+    <td>${escapeXml(r.Service)}</td>
+    <td>${escapeXml(r.Stage)}</td>
+    <td>${escapeXml(r.Notes)}</td>
+  </tr>`).join("");
+  return `<table border="1" cellspacing="0" cellpadding="4">${head}${body}</table>`;
+}
+function exportWord(){
+  const rowsMid = regionToRows(state.regions.find(r=>r.id==="mid"));
+  const rowsPa  = regionToRows(state.regions.find(r=>r.id==="pa"));
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
+    <h1>LEO’s Opportunity Snapshot Report</h1>
+    <h2>Mid-Atlantic</h2>${buildHtmlTable(rowsMid)}
+    <h2>Pennsylvania</h2>${buildHtmlTable(rowsPa)}
+  </body></html>`;
+  const blob = new Blob([html], {type:"application/msword"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.doc";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function exportExcel(){
+  const rows = [...regionToRows(state.regions.find(r=>r.id==="mid")), ...regionToRows(state.regions.find(r=>r.id==="pa"))];
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${buildHtmlTable(rows)}</body></html>`;
+  const blob = new Blob([html], {type:"application/vnd.ms-excel"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.xls";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+$("btnWord").addEventListener("click", exportWord);
+$("btnExcel").addEventListener("click", exportExcel);
+
+/* Import modal (paste/txt only) */
+const imp = {
+  el: $("impModal"),
+  text: $("impText"),
+  out: $("impOut"),
+  open(){ this.el.style.display="flex"; },
+  close(){ this.el.style.display="none"; },
+  parse(text){
+    const lines = String(text||"").replace(/\r/g,"").split("\n").map(s=>s.trim());
+    const blocks=[]; let cur=null;
+    const isLabel = s => /^stage:|^dlop:|^service:|^notes/i.test(s);
+    const getVal = s => s.split(":").slice(1).join(":").trim();
+    function toNumber(s){ if(!s) return 0; s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; }
+    function flush(){ if(cur && cur.name) blocks.push(cur); cur=null; }
+    function start(name){ cur={name, stage:"", dlop:0, service:"", notes:""}; }
+    for(let i=0;i<lines.length;i++){
+      const L=lines[i]; if(!L){ continue; }
+      if(!isLabel(L)){ if(cur && (cur.stage||cur.service||cur.dlop||cur.notes)) flush(); start(L); }
+      else if(cur){
+        if(/^stage:/i.test(L)) cur.stage=getVal(L);
+        else if(/^dlop:/i.test(L)) cur.dlop=toNumber(getVal(L));
+        else if(/^service:/i.test(L)) cur.service=getVal(L);
+        else if(/^notes/i.test(L)){ cur.notes=getVal(L); }
+      }
+    }
+    if(cur) flush();
+    return blocks;
+  }
+};
+$("btnImport").addEventListener("click", ()=> imp.open());
+$("impClose").addEventListener("click", ()=> imp.close());
+$("impPreview").addEventListener("click", ()=>{
+  try{
+    const blocks = imp.parse(imp.text.value);
+    if(!blocks.length){ imp.out.textContent = "No records found. Check your formatting (blank line between records)."; return; }
+    imp.out.innerHTML = blocks.slice(0,20).map(b=>`• <b>${escapeHtml(b.name)}</b> — $${(b.dlop||0).toLocaleString()} — ${escapeHtml(b.stage||"")}`).join("<br>")
+      + (blocks.length>20 ? `<div style='color:#9fb0d0'>…and ${blocks.length-20} more</div>`:"");
+  }catch(err){ imp.out.textContent = "Preview error: " + (err.message||err); }
+});
+$("impApply").addEventListener("click", ()=>{
+  const blocks = imp.parse(imp.text.value);
+  if(!blocks.length){ alert("Nothing to import."); return; }
+  const r = state.regions.find(rr=> rr.id===activeRegionId);
+  const norm = s => String(s||"").toLowerCase().replace(/[–—]/g,"-").trim();
+  const map = new Map(r.opportunities.map(o=> [norm(o.name), o]));
+  let updates=0, adds=0;
+  blocks.forEach(b=>{
+    const key = norm(b.name);
+    const tgt = map.get(key);
+    if(tgt){ if(b.dlop) tgt.dlop=b.dlop; if(b.stage) tgt.stage=b.stage; if(b.service) tgt.service=b.service; if(b.notes) tgt.notes=b.notes; updates++; }
+    else { r.opportunities.push({ id:"op-"+Math.random().toString(36).slice(2,9), name:b.name, stage:b.stage, dlop:b.dlop||0, service:b.service, notes:b.notes, attachments:[] }); adds++; }
+  });
+  try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
+  render();
+  imp.out.innerHTML = `✅ Imported ${updates} updated, ${adds} new.`;
+});
+
+/* Tabs & filters */
+$("tab-mid").addEventListener("click", ()=>{ activeRegionId="mid"; $("tab-mid").classList.add("active"); $("tab-pa").classList.remove("active"); render(); });
+$("tab-pa").addEventListener("click",  ()=>{ activeRegionId="pa";  $("tab-pa").classList.add("active");  $("tab-mid").classList.remove("active"); render(); });
+$("search").addEventListener("input", (e)=>{ sidebarQuery=e.target.value; render(); });
+$("stageFilter").addEventListener("change", ()=> render());
+
+/* Prefer last snapshot */
+try{
+  const persisted = localStorage.getItem(LS_LAST);
+  if(persisted){
+    const parsed = JSON.parse(persisted);
+    if(parsed && parsed.regions){ state.regions = parsed.regions; }
+  }
+}catch(e){}
+
+render();
+
+/* Clear entire report */
+$("btnClear").addEventListener("click", ()=>{
+  if(!confirm("Clear ALL opportunities for BOTH regions? This cannot be undone (unless you previously Saved).")) return;
+  state.regions.forEach(r=> r.opportunities = []);
+  try{ localStorage.removeItem(LS_LAST); }catch(e){}
+  render();
+  alert("Report cleared.");
+});
+}); // DOMContentLoaded
+</script>
+</body>
+</html>
