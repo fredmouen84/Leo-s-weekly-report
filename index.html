@@ -15,26 +15,41 @@
   .btns{ display:flex; gap:8px; flex-wrap:wrap; }
   .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
   .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
-  #totalChip{ font-weight:800; font-size:22px; color:#dbe6ff; text-shadow:0 0 8px rgba(90,140,240,.15); }
 
-  .wrap{
-    max-width:1200px;
-    margin:14px auto;
-    display:grid;
-    grid-template-columns:280px 1fr;
-    gap:16px;
-    align-items:flex-start;
+  /* Icon container */
+  .btn-icon{
+    width:20px;
+    height:20px;
+    margin-right:4px;
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
+  .btn-icon svg{
+    width:100%;
+    height:100%;
+    display:block;
+    stroke:currentColor;
+    fill:none;
+    stroke-width:1.7;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  #totalChip{ font-weight:800; font-size:22px; color:#dbe6ff; text-shadow:0 0 8px rgba(90,140,240,.15); }
+  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:flex-start; }
 
   aside, main{ background:var(--panel); border:1px solid var(--bord); border-radius:14px; padding:12px; }
 
-  /* SIDEBAR STICKY */
+  /* Make the whole sidebar box (tabs + search + legend + list) sticky */
   aside{
     position:sticky;
-    top:96px; /* sits under header+toolbar */
+    top:96px; /* below header + toolbar */
+    max-height:calc(100vh - 110px);
     display:flex;
     flex-direction:column;
-    max-height:calc(100vh - 110px);
+    overflow:hidden;
   }
 
   .tabs{ display:flex; gap:8px; margin-bottom:8px; }
@@ -50,14 +65,13 @@
   input[data-field="dlop"]{ text-align:right; }
 
   .list{
-    flex:1;
+    margin-top:6px;
     max-height:100%;
     overflow:auto;
     border-top:1px dashed var(--bord);
   }
   .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
   .list .item:hover{ background:#0E1530; }
-
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
   .card{ background:#0D1328; border:1px solid #1B2A4B; border-radius:14px; padding:12px; transition:transform .12s, box-shadow .12s, border-color .12s; }
   .card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(38,74,154,.35) inset; border-color:var(--acc); cursor:pointer; }
@@ -106,12 +120,80 @@
   </div>
   <div class="toolbar">
     <div class="btns">
-      <button id="btnWord" class="btn" title="Export Word">Word</button>
-      <button id="btnExcel" class="btn" title="Export Excel">Excel</button>
-      <button id="btnImport" class="btn" title="Import Opportunities">Import</button>
-      <button id="btnSave" class="btn" title="Save Report">Save</button>
-      <button id="btnReset" class="btn" title="Reset to Last Save">Reset</button>
-      <button id="btnClear" class="btn" title="Clear Entire Report">Clear</button>
+      <!-- Word -->
+      <button id="btnWord" class="btn" title="Export Word">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+            <path d="M9 8l1.5 7L12 11l1.5 4L15 8"></path>
+          </svg>
+        </span>
+        <span>Word</span>
+      </button>
+
+      <!-- Excel -->
+      <button id="btnExcel" class="btn" title="Export Excel">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+            <path d="M10 4v16"></path>
+            <path d="M4 10h16"></path>
+            <path d="M13 9l3 6"></path>
+            <path d="M16 9l-3 6"></path>
+          </svg>
+        </span>
+        <span>Excel</span>
+      </button>
+
+      <!-- Import -->
+      <button id="btnImport" class="btn" title="Import Opportunities">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v12"></path>
+            <path d="M8 11l4 4 4-4"></path>
+            <path d="M4 19h16"></path>
+          </svg>
+        </span>
+        <span>Import</span>
+      </button>
+
+      <!-- Save -->
+      <button id="btnSave" class="btn" title="Save Report">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 4h11l3 3v13H5z"></path>
+            <path d="M9 4v6h6V4z"></path>
+            <path d="M9 18h6"></path>
+          </svg>
+        </span>
+        <span>Save</span>
+      </button>
+
+      <!-- Reset -->
+      <button id="btnReset" class="btn" title="Reset to Last Save">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M10 4H5v5"></path>
+            <path d="M5 4l3 3.5"></path>
+            <path d="M6 13a7 7 0 1 0 2-5"></path>
+          </svg>
+        </span>
+        <span>Reset</span>
+      </button>
+
+      <!-- Clear -->
+      <button id="btnClear" class="btn" title="Clear Entire Report">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 7h16"></path>
+            <path d="M10 4h4"></path>
+            <path d="M6 7l1 13h10l1-13"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+          </svg>
+        </span>
+        <span>Clear</span>
+      </button>
     </div>
     <span id="totalChip">Total DLOP: $0</span>
   </div>
@@ -209,16 +291,8 @@ const LS_LAST="leos_toolbar_last", LS_PREV="leos_toolbar_prev";
 /* ===== Utils ===== */
 const $ = (id)=> document.getElementById(id);
 function currencyToNumber(v){ if(typeof v==="number") return v; if(!v) return 0; return parseFloat(String(v).replace(/[^\d.]/g,""))||0; }
-function numberToCurrency(n){
-  try{
-    return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
-  }catch(e){
-    return "$"+Math.round(n).toLocaleString();
-  }
-}
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>\"']/g, m => ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
-}
+function numberToCurrency(n){ try{ return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}); }catch(e){ return "$"+Math.round(n).toLocaleString(); } }
+function escapeHtml(s){ return String(s||"").replace(/[&<>\"']/g, m => ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
 /* ===== GlassBar ===== */
 function stageInfo(stageText){
@@ -250,13 +324,23 @@ function applyHeatbar(rootEl, stageText){
 /* ===== Totals ===== */
 function renderTotalsOnly(){
   const r = state.regions.find(rr=> rr.id===activeRegionId);
-  if(!r){ $("totalChip").textContent = "Total DLOP: $0"; return; }
   const q = (sidebarQuery||"").toLowerCase();
-  const items = r.opportunities.filter(o=>
-    (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q)
-  );
+  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
+
+  const stageSel = $("stageFilter");
+  if(stageSel && stageSel.value !== "all"){
+    const sel = stageSel.value.toLowerCase();
+    items = items.filter(o => {
+      const st = String(o.stage||"").toLowerCase();
+      if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+      if(sel === "lost") return st.includes("lost");
+      if(sel === "win") return st.includes("win");
+      return st === sel;
+    });
+  }
+
   const total = items.reduce((a,o)=> a + currencyToNumber(o.dlop), 0);
-  $("totalChip").textContent = r.name + " Total DLOP: " + numberToCurrency(total);
+  $("totalChip").textContent = "Total DLOP: " + numberToCurrency(total);
 }
 
 /* ===== Cards ===== */
@@ -345,16 +429,10 @@ function openCardModal(o){
   requestAnimationFrame(()=> m.classList.add("show"));
 }
 $("btnCloseCard").addEventListener("click", ()=>{
-  const m = $("cardModal");
-  m.classList.remove("show");
-  setTimeout(()=> m.style.display="none", 180);
+  const m = $("cardModal"); m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180);
 });
 $("cardModal").addEventListener("click", (e)=>{
-  if(e.target.id==="cardModal"){
-    const m=e.currentTarget;
-    m.classList.remove("show");
-    setTimeout(()=> m.style.display="none", 180);
-  }
+  if(e.target.id==="cardModal"){ const m=e.currentTarget; m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180); }
 });
 
 /* New card template */
@@ -380,11 +458,8 @@ const addCard = `
 /* Render */
 function render(){
   const r = state.regions.find(rr=> rr.id===activeRegionId);
-  if(!r) return;
   const q = (sidebarQuery||"").toLowerCase();
-  let items = r.opportunities.filter(o=>
-    (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q)
-  );
+  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
   const stageSel = $("stageFilter");
   if(stageSel && stageSel.value !== "all"){
     const sel = stageSel.value.toLowerCase();
@@ -396,7 +471,7 @@ function render(){
       return st === sel;
     });
   }
-  // Sidebar list
+  // Sidebar
   $("list").innerHTML = items.map(o=>`<div class="item" data-jump="${o.id}">${escapeHtml(o.name||"(no name)")}</div>`).join("");
   $("list").querySelectorAll("[data-jump]").forEach(el=> el.addEventListener("click", ()=>{
     const id = el.getAttribute("data-jump"); const t = document.getElementById("card-"+id);
@@ -414,20 +489,10 @@ function render(){
       const dlopS = ($("add_dlop")||{}).value||"";
       const service = ($("add_service")||{}).value||"";
       const notes = ($("add_notes")||{}).value||"";
-
-      const dlop = (function(s){
-        s=String(s); s=s.replace(/[^\d.]/g,"");
-        if((s.match(/\./g)||[]).length>1){
-          const p=s.split(".");
-          s=p.slice(0,-1).join("")+"."+p.slice(-1)[0];
-        }
-        const n=parseFloat(s);
-        return isNaN(n)?0:n;
-      })(dlopS);
-
-      const region = state.regions.find(rr=> rr.id===activeRegionId);
+      const dlop = (function(s){ s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; })(dlopS);
+      const r = state.regions.find(rr=> rr.id===activeRegionId);
       const newItem = { id:"op-"+Math.random().toString(36).slice(2,9), name, stage, dlop, service, notes, attachments:[] };
-      region.opportunities.unshift(newItem);
+      r.opportunities.unshift(newItem);
       try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
       render();
       const newEl = document.getElementById("card-"+newItem.id);
@@ -457,21 +522,9 @@ $("btnReset").addEventListener("click", ()=>{
 });
 
 function regionToRows(region){
-  return region.opportunities.map(o=>({
-    Region:region.name,
-    Name:o.name||"",
-    DLOP:currencyToNumber(o.dlop)||0,
-    Service:o.service||"",
-    Stage:o.stage||"",
-    Notes:(o.notes||"").replace(/\n/g," ")
-  }));
+  return region.opportunities.map(o=>({Region:region.name, Name:o.name||"", DLOP:currencyToNumber(o.dlop)||0, Service:o.service||"", Stage:o.stage||"", Notes:(o.notes||"").replace(/\n/g," ")}));
 }
-function escapeXml(s){
-  return String(s||"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;");
-}
+function escapeXml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function buildHtmlTable(rows){
   const head = '<tr><th>Region</th><th>Name</th><th>DLOP</th><th>Service</th><th>Stage</th><th>Notes</th></tr>';
   const body = rows.map(r=> `<tr>
@@ -498,10 +551,7 @@ function exportWord(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 function exportExcel(){
-  const rows = [
-    ...regionToRows(state.regions.find(r=>r.id==="mid")),
-    ...regionToRows(state.regions.find(r=>r.id==="pa"))
-  ];
+  const rows = [...regionToRows(state.regions.find(r=>r.id==="mid")), ...regionToRows(state.regions.find(r=>r.id==="pa"))];
   const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${buildHtmlTable(rows)}</body></html>`;
   const blob = new Blob([html], {type:"application/vnd.ms-excel"});
   const url = URL.createObjectURL(blob);
@@ -523,26 +573,13 @@ const imp = {
     const blocks=[]; let cur=null;
     const isLabel = s => /^stage:|^dlop:|^service:|^notes/i.test(s);
     const getVal = s => s.split(":").slice(1).join(":").trim();
-    function toNumber(s){
-      if(!s) return 0;
-      s=String(s); s=s.replace(/[^\d.]/g,"");
-      if((s.match(/\./g)||[]).length>1){
-        const p=s.split(".");
-        s=p.slice(0,-1).join("")+"."+p.slice(-1)[0];
-      }
-      const n=parseFloat(s);
-      return isNaN(n)?0:n;
-    }
+    function toNumber(s){ if(!s) return 0; s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; }
     function flush(){ if(cur && cur.name) blocks.push(cur); cur=null; }
     function start(name){ cur={name, stage:"", dlop:0, service:"", notes:""}; }
-
     for(let i=0;i<lines.length;i++){
-      const L=lines[i];
-      if(!L){ continue; }
-      if(!isLabel(L)){
-        if(cur && (cur.stage||cur.service||cur.dlop||cur.notes)) flush();
-        start(L);
-      }else if(cur){
+      const L=lines[i]; if(!L){ continue; }
+      if(!isLabel(L)){ if(cur && (cur.stage||cur.service||cur.dlop||cur.notes)) flush(); start(L); }
+      else if(cur){
         if(/^stage:/i.test(L)) cur.stage=getVal(L);
         else if(/^dlop:/i.test(L)) cur.dlop=toNumber(getVal(L));
         else if(/^service:/i.test(L)) cur.service=getVal(L);
@@ -558,16 +595,10 @@ $("impClose").addEventListener("click", ()=> imp.close());
 $("impPreview").addEventListener("click", ()=>{
   try{
     const blocks = imp.parse(imp.text.value);
-    if(!blocks.length){
-      imp.out.textContent = "No records found. Check your formatting (blank line between records).";
-      return;
-    }
-    imp.out.innerHTML =
-      blocks.slice(0,20).map(b=>`• <b>${escapeHtml(b.name)}</b> — $${(b.dlop||0).toLocaleString()} — ${escapeHtml(b.stage||"")}`).join("<br>") +
-      (blocks.length>20 ? `<div style='color:#9fb0d0'>…and ${blocks.length-20} more</div>`:"");
-  }catch(err){
-    imp.out.textContent = "Preview error: " + (err.message||err);
-  }
+    if(!blocks.length){ imp.out.textContent = "No records found. Check your formatting (blank line between records)."; return; }
+    imp.out.innerHTML = blocks.slice(0,20).map(b=>`• <b>${escapeHtml(b.name)}</b> — $${(b.dlop||0).toLocaleString()} — ${escapeHtml(b.stage||"")}`).join("<br>")
+      + (blocks.length>20 ? `<div style='color:#9fb0d0'>…and ${blocks.length-20} more</div>`:"");
+  }catch(err){ imp.out.textContent = "Preview error: " + (err.message||err); }
 });
 $("impApply").addEventListener("click", ()=>{
   const blocks = imp.parse(imp.text.value);
@@ -579,24 +610,8 @@ $("impApply").addEventListener("click", ()=>{
   blocks.forEach(b=>{
     const key = norm(b.name);
     const tgt = map.get(key);
-    if(tgt){
-      if(b.dlop) tgt.dlop=b.dlop;
-      if(b.stage) tgt.stage=b.stage;
-      if(b.service) tgt.service=b.service;
-      if(b.notes) tgt.notes=b.notes;
-      updates++;
-    }else{
-      r.opportunities.push({
-        id:"op-"+Math.random().toString(36).slice(2,9),
-        name:b.name,
-        stage:b.stage,
-        dlop:b.dlop||0,
-        service:b.service,
-        notes:b.notes,
-        attachments:[]
-      });
-      adds++;
-    }
+    if(tgt){ if(b.dlop) tgt.dlop=b.dlop; if(b.stage) tgt.stage=b.stage; if(b.service) tgt.service=b.service; if(b.notes) tgt.notes=b.notes; updates++; }
+    else { r.opportunities.push({ id:"op-"+Math.random().toString(36).slice(2,9), name:b.name, stage:b.stage, dlop:b.dlop||0, service:b.service, notes:b.notes, attachments:[] }); adds++; }
   });
   try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
   render();
@@ -604,22 +619,9 @@ $("impApply").addEventListener("click", ()=>{
 });
 
 /* Tabs & filters */
-$("tab-mid").addEventListener("click", ()=>{
-  activeRegionId="mid";
-  $("tab-mid").classList.add("active");
-  $("tab-pa").classList.remove("active");
-  render();
-});
-$("tab-pa").addEventListener("click",  ()=>{
-  activeRegionId="pa";
-  $("tab-pa").classList.add("active");
-  $("tab-mid").classList.remove("active");
-  render();
-});
-$("search").addEventListener("input", (e)=>{
-  sidebarQuery=e.target.value;
-  render();
-});
+$("tab-mid").addEventListener("click", ()=>{ activeRegionId="mid"; $("tab-mid").classList.add("active"); $("tab-pa").classList.remove("active"); render(); });
+$("tab-pa").addEventListener("click",  ()=>{ activeRegionId="pa";  $("tab-pa").classList.add("active");  $("tab-mid").classList.remove("active"); render(); });
+$("search").addEventListener("input", (e)=>{ sidebarQuery=e.target.value; render(); });
 $("stageFilter").addEventListener("change", ()=> render());
 
 /* Prefer last snapshot */
