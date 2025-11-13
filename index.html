@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LEO’s Opportunity Snapshot Report — Offline Clean V2</title>
+<title>LEO’s Opportunity Snapshot Report — Live (Firebase)</title>
 <style>
   :root{ --panel:#0B0F1E; --bg:#000; --bord:#16223D; --ink:#E7EEFF; --sub:#9fb0d0; --acc:#264a9a; --acc2:#1f3b82; --btn:#0E1A36; --btnh:#15244A; }
   html,body{ margin:0; background:var(--bg); color:var(--ink); font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial; }
@@ -11,7 +11,7 @@
   header{ position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0B1022,#0a1230); border-bottom:1px solid #1f2d57; }
   .row{ max-width:1200px; margin:0 auto; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
   h1{ margin:0; font-size:26px; letter-spacing:.3px; }
-  .toolbar{ max-width:1200px; margin:8px auto 0; display:flex; align-items:center; gap:10px; padding:0 14px 10px; justify-content:space-between; }
+  .toolbar{ max-width:1200px; margin:8px auto 0; display:flex; align-items:center; gap:10px; padding:0 14px 10px; justify-content:space-between; flex-wrap:wrap; }
   .btns{ display:flex; gap:8px; flex-wrap:wrap; }
   .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
   .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
@@ -38,11 +38,11 @@
   }
 
   #totalChip{ font-weight:800; font-size:22px; color:#dbe6ff; text-shadow:0 0 8px rgba(90,140,240,.15); }
-  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:flex-start; }
+  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:flex-start; padding:0 10px 20px; box-sizing:border-box; }
 
   aside, main{ background:var(--panel); border:1px solid var(--bord); border-radius:14px; padding:12px; }
 
-  /* Make the whole sidebar box (tabs + search + legend + list) sticky */
+  /* Make the whole sidebar box (tabs + search + legend + list) sticky on desktop */
   aside{
     position:sticky;
     top:96px; /* below header + toolbar */
@@ -52,7 +52,7 @@
     overflow:hidden;
   }
 
-  .tabs{ display:flex; gap:8px; margin-bottom:8px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .tab{ padding:6px 10px; border:1px solid #1D2B4F; border-radius:10px; cursor:pointer; }
   .tab.active{ background:#10204A; }
 
@@ -72,6 +72,7 @@
   }
   .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
   .list .item:hover{ background:#0E1530; }
+
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
   .card{ background:#0D1328; border:1px solid #1B2A4B; border-radius:14px; padding:12px; transition:transform .12s, box-shadow .12s, border-color .12s; }
   .card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(38,74,154,.35) inset; border-color:var(--acc); cursor:pointer; }
@@ -109,8 +110,33 @@
   .card.add-card{ outline:1px dashed #2a3f73; background:#0c1230; padding:16px; }
   .card.add-card .card-head h3{ font-size:18px; }
   .add-row{ display:grid; grid-template-columns:repeat(4, minmax(160px, 1fr)); gap:10px; }
-  @media (max-width: 900px){ .add-row{ grid-template-columns:repeat(2, 1fr); } }
-  @media (max-width: 560px){ .add-row{ grid-template-columns:1fr; } }
+
+  /* Responsive tweaks */
+  @media (max-width: 900px){
+    .wrap{
+      grid-template-columns:1fr;
+    }
+    aside{
+      position:static;
+      max-height:none;
+    }
+    .grid{
+      grid-template-columns:1fr;
+    }
+  }
+  @media (max-width: 600px){
+    .row{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .toolbar{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    #totalChip{
+      align-self:flex-start;
+    }
+  }
 </style>
 </head>
 <body>
@@ -170,7 +196,7 @@
       </button>
 
       <!-- Reset -->
-      <button id="btnReset" class="btn" title="Reset to Last Save">
+      <button id="btnReset" class="btn" title="Reset from Cloud">
         <span class="btn-icon">
           <svg viewBox="0 0 24 24">
             <path d="M10 4H5v5"></path>
@@ -270,380 +296,428 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-/* ===== STATE ===== */
-const state = {
-  regions: [
-    { id: "mid", name: "Mid-Atlantic", opportunities: [
-      {"id": "op-1400k", "name": "1400 K", "stage": "Proposal Submitted", "dlop": 50000, "service": "Vehicle Services", "notes": "Example", "attachments": []},
-    ]},
-    { id: "pa",  name: "Pennsylvania", opportunities: [
-      {"id": "op-phmc", "name": "PHMC Cedar Campus", "stage": "Negotiation/Review", "dlop": 1355000, "service": "Self-Park", "notes": "Awaiting legal review", "attachments": []},
-      {"id": "op-jpm", "name": "JP Morgan", "stage": "Closed – Lost", "dlop": 0, "service": "Self-Park", "notes": "Chose incumbent", "attachments": []}
-    ]}
-  ]
-};
-let activeRegionId = "mid";
-let sidebarQuery = "";
-const LS_LAST="leos_toolbar_last", LS_PREV="leos_toolbar_prev";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* ===== Utils ===== */
-const $ = (id)=> document.getElementById(id);
-function currencyToNumber(v){ if(typeof v==="number") return v; if(!v) return 0; return parseFloat(String(v).replace(/[^\d.]/g,""))||0; }
-function numberToCurrency(n){ try{ return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}); }catch(e){ return "$"+Math.round(n).toLocaleString(); } }
-function escapeHtml(s){ return String(s||"").replace(/[&<>\"']/g, m => ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-
-/* ===== GlassBar ===== */
-function stageInfo(stageText){
-  const s = String(stageText||"").toLowerCase();
-  if (s.includes("lost"))     return { pct: 0,   cls: "heat--lost",        label: "Closed – Lost" };
-  if (s.includes("win"))      return { pct: 100, cls: "heat--won",         label: "Closed – Won" };
-  if (s.includes("proposal")) return { pct: 90,  cls: "heat--proposal",    label: "Proposal" };
-  if (s.includes("working"))  return { pct: 55,  cls: "heat--working",     label: "Working On" };
-  if (s.includes("prospect")) return { pct: 10,  cls: "heat--prospecting", label: "Prospecting" };
-  if (s.includes("negotiation") || s.includes("review")) return { pct: 85, cls: "heat--proposal", label: "Proposal / Review" };
-  return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
-}
-function applyHeatbar(rootEl, stageText){
-  const hb = rootEl.querySelector(".heatbar");
-  if(!hb) return;
-  const fill = hb.querySelector(".fill");
-  hb.className = "heatbar"; // reset
-  const info = stageInfo(stageText);
-  hb.classList.add(info.cls);
-  fill.style.width = info.pct + "%";
-  hb.setAttribute("role","progressbar");
-  hb.setAttribute("aria-valuemin","0");
-  hb.setAttribute("aria-valuemax","100");
-  hb.setAttribute("aria-valuenow", String(info.pct));
-  const pctEl = rootEl.querySelector(".pct-tag"); if(pctEl) pctEl.textContent = info.pct + "%";
-  const stEl  = rootEl.querySelector(".heatrow .stage-tag"); if(stEl) stEl.textContent = info.label;
-}
-
-/* ===== Totals ===== */
-function renderTotalsOnly(){
-  const r = state.regions.find(rr=> rr.id===activeRegionId);
-  const q = (sidebarQuery||"").toLowerCase();
-  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
-
-  const stageSel = $("stageFilter");
-  if(stageSel && stageSel.value !== "all"){
-    const sel = stageSel.value.toLowerCase();
-    items = items.filter(o => {
-      const st = String(o.stage||"").toLowerCase();
-      if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
-      if(sel === "lost") return st.includes("lost");
-      if(sel === "win") return st.includes("win");
-      return st === sel;
-    });
-  }
-
-  const total = items.reduce((a,o)=> a + currencyToNumber(o.dlop), 0);
-  $("totalChip").textContent = "Total DLOP: " + numberToCurrency(total);
-}
-
-/* ===== Cards ===== */
-function cardHtml(o){
-  const isProposal = /proposal/i.test(String(o.stage||""));
-  return `
-    <div class="card" id="card-${o.id}">
-      <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
-      <div class="heatbar"><div class="fill"></div></div>
-      <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
-      <div class="row2" style="margin-top:6px">
-        <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
-        <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
-        <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
-        <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
-      </div>
-      <div style="margin-top:6px">
-        <label>Notes / Last Interaction</label>
-        <textarea class="field" data-field="notes" rows="3">${escapeHtml(o.notes||"")}</textarea>
-      </div>
-    </div>
-  `;
-}
-function bindCardRoot(root, o){
-  if(!root) return;
-  const toggleSubmission = ()=>{
-    const isProposal = /proposal/i.test(String(o.stage||""));
-    const subEl = root.querySelector('[data-field="submissionDate"]')?.closest('div');
-    if(subEl) subEl.style.display = isProposal ? "" : "none";
+  /* Your Firebase config */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCqT13iN7j0oJ1U0b39dSGRn_gMWuxnoro",
+    authDomain: "leo-s-opportunity-report.firebaseapp.com",
+    projectId: "leo-s-opportunity-report",
+    storageBucket: "leo-s-opportunity-report.firebasestorage.app",
+    messagingSenderId: "892061279926",
+    appId: "1:892061279926:web:700624db1d36e4f9ee6817"
   };
-  applyHeatbar(root, o.stage);
-  root.querySelectorAll("[data-field]").forEach(el=>{
-    const field = el.getAttribute("data-field");
-    const handler = ()=>{
-      let val = (el.tagName==="TEXTAREA" || el.tagName==="INPUT") ? el.value : el.textContent;
-      if(field==="dlop") val = currencyToNumber(val);
-      o[field] = val;
-      try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
-      renderTotalsOnly();
-      if(field==="stage"){ toggleSubmission(); applyHeatbar(root, o.stage); }
+
+  let db = null;
+  let docRef = null;
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    docRef = doc(db, "leosReports", "primary"); // one shared document for this dashboard
+  } catch (e) {
+    console.error("Firebase init error (check config):", e);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    /* ===== STATE ===== */
+    const state = {
+      regions: [
+        { id: "mid", name: "Mid-Atlantic", opportunities: [
+          {"id": "op-1400k", "name": "1400 K", "stage": "Proposal Submitted", "dlop": 50000, "service": "Vehicle Services", "notes": "Example", "attachments": []},
+        ]},
+        { id: "pa",  name: "Pennsylvania", opportunities: [
+          {"id": "op-phmc", "name": "PHMC Cedar Campus", "stage": "Negotiation/Review", "dlop": 1355000, "service": "Self-Park", "notes": "Awaiting legal review", "attachments": []},
+          {"id": "op-jpm", "name": "JP Morgan", "stage": "Closed – Lost", "dlop": 0, "service": "Self-Park", "notes": "Chose incumbent", "attachments": []}
+        ]}
+      ]
     };
-    if(el.tagName==="TEXTAREA") el.addEventListener("input", handler);
-    else if(el.tagName==="INPUT") el.addEventListener("change", handler);
-    else el.addEventListener("input", handler);
-  });
-  toggleSubmission();
-}
-function bindInlineCard(o){
-  const root = document.getElementById("card-"+o.id);
-  bindCardRoot(root, o);
-  if(root){
-    root.addEventListener("click", (ev)=>{
-      const t = ev.target;
-      if(t.closest("input") || t.closest("textarea") || t.closest("button")) return;
-      openCardModal(o);
-    });
-  }
-}
-function cardHtmlLarge(o){
-  const isProposal = /proposal/i.test(String(o.stage||""));
-  return `
-    <div class="card card--large">
-      <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
-      <div class="heatbar"><div class="fill"></div></div>
-      <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
-      <div class="row2" style="margin-top:6px">
-        <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
-        <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
-        <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
-        <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
-      </div>
-      <div style="margin-top:6px">
-        <label>Notes / Last Interaction</label>
-        <textarea class="field" rows="8" data-field="notes">${escapeHtml(o.notes||"")}</textarea>
-      </div>
-    </div>`;
-}
+    let activeRegionId = "mid";
+    let sidebarQuery = "";
 
-/* Modal open/close */
-function openCardModal(o){
-  const m = $("cardModal");
-  const body = $("cardModalBody");
-  body.innerHTML = cardHtmlLarge(o);
-  bindCardRoot(body.querySelector(".card"), o);
-  m.style.display="flex";
-  requestAnimationFrame(()=> m.classList.add("show"));
-}
-$("btnCloseCard").addEventListener("click", ()=>{
-  const m = $("cardModal"); m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180);
-});
-$("cardModal").addEventListener("click", (e)=>{
-  if(e.target.id==="cardModal"){ const m=e.currentTarget; m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180); }
-});
+    /* ===== Utils ===== */
+    const $ = (id)=> document.getElementById(id);
+    function currencyToNumber(v){ if(typeof v==="number") return v; if(!v) return 0; return parseFloat(String(v).replace(/[^\d.]/g,""))||0; }
+    function numberToCurrency(n){ try{ return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}); }catch(e){ return "$"+Math.round(n).toLocaleString(); } }
+    function escapeHtml(s){ return String(s||"").replace(/[&<>\"']/g, m => ({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
-/* New card template */
-const addCard = `
-  <div class="card add-card">
-    <div class="card-head"><h3>New Opportunity</h3></div>
-    <div class="add-row">
-      <div><label>Name</label><input class="field" id="add_name" placeholder="Opportunity name"></div>
-      <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Win / Lost"></div>
-      <div><label>DLOP</label><input class="field" id="add_dlop" placeholder="$0"></div>
-      <div><label>Service</label><input class="field" id="add_service" placeholder="Self-Park / Valet / Vehicle Services"></div>
-    </div>
-    <div style="margin-top:6px">
-      <label>Notes / Last Interaction</label>
-      <textarea class="field" id="add_notes" rows="2" placeholder="Your note..."></textarea>
-    </div>
-    <div style="margin-top:10px;display:flex;gap:8px">
-      <button class="btn" id="add_btn">Add Opportunity</button>
-    </div>
-  </div>
-`;
+    /* ===== GlassBar ===== */
+    function stageInfo(stageText){
+      const s = String(stageText||"").toLowerCase();
+      if (s.includes("lost"))     return { pct: 0,   cls: "heat--lost",        label: "Closed – Lost" };
+      if (s.includes("win"))      return { pct: 100, cls: "heat--won",         label: "Closed – Won" };
+      if (s.includes("proposal")) return { pct: 90,  cls: "heat--proposal",    label: "Proposal" };
+      if (s.includes("working"))  return { pct: 55,  cls: "heat--working",     label: "Working On" };
+      if (s.includes("prospect")) return { pct: 10,  cls: "heat--prospecting", label: "Prospecting" };
+      if (s.includes("negotiation") || s.includes("review")) return { pct: 85, cls: "heat--proposal", label: "Proposal / Review" };
+      return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
+    }
+    function applyHeatbar(rootEl, stageText){
+      const hb = rootEl.querySelector(".heatbar");
+      if(!hb) return;
+      const fill = hb.querySelector(".fill");
+      hb.className = "heatbar"; // reset
+      const info = stageInfo(stageText);
+      hb.classList.add(info.cls);
+      fill.style.width = info.pct + "%";
+      hb.setAttribute("role","progressbar");
+      hb.setAttribute("aria-valuemin","0");
+      hb.setAttribute("aria-valuemax","100");
+      hb.setAttribute("aria-valuenow", String(info.pct));
+      const pctEl = rootEl.querySelector(".pct-tag"); if(pctEl) pctEl.textContent = info.pct + "%";
+      const stEl  = rootEl.querySelector(".heatrow .stage-tag"); if(stEl) stEl.textContent = info.label;
+    }
 
-/* Render */
-function render(){
-  const r = state.regions.find(rr=> rr.id===activeRegionId);
-  const q = (sidebarQuery||"").toLowerCase();
-  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
-  const stageSel = $("stageFilter");
-  if(stageSel && stageSel.value !== "all"){
-    const sel = stageSel.value.toLowerCase();
-    items = items.filter(o => {
-      const st = String(o.stage||"").toLowerCase();
-      if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
-      if(sel === "lost") return st.includes("lost");
-      if(sel === "win") return st.includes("win");
-      return st === sel;
-    });
-  }
-  // Sidebar
-  $("list").innerHTML = items.map(o=>`<div class="item" data-jump="${o.id}">${escapeHtml(o.name||"(no name)")}</div>`).join("");
-  $("list").querySelectorAll("[data-jump]").forEach(el=> el.addEventListener("click", ()=>{
-    const id = el.getAttribute("data-jump"); const t = document.getElementById("card-"+id);
-    if(t) t.scrollIntoView({behavior:"smooth", block:"center"});
-  }));
-  // Cards
-  const elCards = $("cards");
-  elCards.innerHTML = addCard + items.map(cardHtml).join("");
-  const addBtn = $("add_btn");
-  if(addBtn){
-    addBtn.addEventListener("click", ()=>{
-      const name = ($("add_name")||{}).value||"";
-      if(!name.trim()){ alert("Please enter a name."); return; }
-      const stage = ($("add_stage")||{}).value||"";
-      const dlopS = ($("add_dlop")||{}).value||"";
-      const service = ($("add_service")||{}).value||"";
-      const notes = ($("add_notes")||{}).value||"";
-      const dlop = (function(s){ s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; })(dlopS);
+    /* ===== Totals ===== */
+    function renderTotalsOnly(){
       const r = state.regions.find(rr=> rr.id===activeRegionId);
-      const newItem = { id:"op-"+Math.random().toString(36).slice(2,9), name, stage, dlop, service, notes, attachments:[] };
-      r.opportunities.unshift(newItem);
-      try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
-      render();
-      const newEl = document.getElementById("card-"+newItem.id);
-      if(newEl) newEl.scrollIntoView({behavior:"smooth", block:"center"});
-    });
-  }
-  items.forEach(bindInlineCard);
-  renderTotalsOnly();
-}
+      const q = (sidebarQuery||"").toLowerCase();
+      let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
 
-/* Toolbar actions */
-$("btnSave").addEventListener("click", ()=>{
-  try{
-    const last = localStorage.getItem(LS_LAST);
-    if(last) localStorage.setItem(LS_PREV, last);
-    localStorage.setItem(LS_LAST, JSON.stringify(state));
-    alert("Saved this report on this device.");
-  }catch(e){ alert("Unable to save."); }
-});
-$("btnReset").addEventListener("click", ()=>{
-  try{
-    const prev = localStorage.getItem(LS_PREV);
-    if(!prev){ alert("No previous snapshot found."); return; }
-    const parsed = JSON.parse(prev);
-    if(parsed && parsed.regions){ Object.assign(state, parsed); render(); alert("Restored previous snapshot."); }
-  }catch(e){ alert("Unable to reset."); }
-});
+      const stageSel = $("stageFilter");
+      if(stageSel && stageSel.value !== "all"){
+        const sel = stageSel.value.toLowerCase();
+        items = items.filter(o => {
+          const st = String(o.stage||"").toLowerCase();
+          if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+          if(sel === "lost") return st.includes("lost");
+          if(sel === "win") return st.includes("win");
+          return st === sel;
+        });
+      }
 
-function regionToRows(region){
-  return region.opportunities.map(o=>({Region:region.name, Name:o.name||"", DLOP:currencyToNumber(o.dlop)||0, Service:o.service||"", Stage:o.stage||"", Notes:(o.notes||"").replace(/\n/g," ")}));
-}
-function escapeXml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-function buildHtmlTable(rows){
-  const head = '<tr><th>Region</th><th>Name</th><th>DLOP</th><th>Service</th><th>Stage</th><th>Notes</th></tr>';
-  const body = rows.map(r=> `<tr>
-    <td>${escapeXml(r.Region)}</td>
-    <td>${escapeXml(r.Name)}</td>
-    <td>${r.DLOP}</td>
-    <td>${escapeXml(r.Service)}</td>
-    <td>${escapeXml(r.Stage)}</td>
-    <td>${escapeXml(r.Notes)}</td>
-  </tr>`).join("");
-  return `<table border="1" cellspacing="0" cellpadding="4">${head}${body}</table>`;
-}
-function exportWord(){
-  const rowsMid = regionToRows(state.regions.find(r=>r.id==="mid"));
-  const rowsPa  = regionToRows(state.regions.find(r=>r.id==="pa"));
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
-    <h1>LEO’s Opportunity Snapshot Report</h1>
-    <h2>Mid-Atlantic</h2>${buildHtmlTable(rowsMid)}
-    <h2>Pennsylvania</h2>${buildHtmlTable(rowsPa)}
-  </body></html>`;
-  const blob = new Blob([html], {type:"application/msword"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.doc";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-function exportExcel(){
-  const rows = [...regionToRows(state.regions.find(r=>r.id==="mid")), ...regionToRows(state.regions.find(r=>r.id==="pa"))];
-  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${buildHtmlTable(rows)}</body></html>`;
-  const blob = new Blob([html], {type:"application/vnd.ms-excel"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.xls";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-}
-$("btnWord").addEventListener("click", exportWord);
-$("btnExcel").addEventListener("click", exportExcel);
+      const total = items.reduce((a,o)=> a + currencyToNumber(o.dlop), 0);
+      $("totalChip").textContent = "Total DLOP: " + numberToCurrency(total);
+    }
 
-/* Import modal (paste/txt only) */
-const imp = {
-  el: $("impModal"),
-  text: $("impText"),
-  out: $("impOut"),
-  open(){ this.el.style.display="flex"; },
-  close(){ this.el.style.display="none"; },
-  parse(text){
-    const lines = String(text||"").replace(/\r/g,"").split("\n").map(s=>s.trim());
-    const blocks=[]; let cur=null;
-    const isLabel = s => /^stage:|^dlop:|^service:|^notes/i.test(s);
-    const getVal = s => s.split(":").slice(1).join(":").trim();
-    function toNumber(s){ if(!s) return 0; s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; }
-    function flush(){ if(cur && cur.name) blocks.push(cur); cur=null; }
-    function start(name){ cur={name, stage:"", dlop:0, service:"", notes:""}; }
-    for(let i=0;i<lines.length;i++){
-      const L=lines[i]; if(!L){ continue; }
-      if(!isLabel(L)){ if(cur && (cur.stage||cur.service||cur.dlop||cur.notes)) flush(); start(L); }
-      else if(cur){
-        if(/^stage:/i.test(L)) cur.stage=getVal(L);
-        else if(/^dlop:/i.test(L)) cur.dlop=toNumber(getVal(L));
-        else if(/^service:/i.test(L)) cur.service=getVal(L);
-        else if(/^notes/i.test(L)){ cur.notes=getVal(L); }
+    /* ===== Cards ===== */
+    function cardHtml(o){
+      const isProposal = /proposal/i.test(String(o.stage||""));
+      return `
+        <div class="card" id="card-${o.id}">
+          <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
+          <div class="heatbar"><div class="fill"></div></div>
+          <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
+          <div class="row2" style="margin-top:6px">
+            <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
+            <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
+            <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
+            <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
+          </div>
+          <div style="margin-top:6px">
+            <label>Notes / Last Interaction</label>
+            <textarea class="field" data-field="notes" rows="3">${escapeHtml(o.notes||"")}</textarea>
+          </div>
+        </div>
+      `;
+    }
+    function bindCardRoot(root, o){
+      if(!root) return;
+      const toggleSubmission = ()=>{
+        const isProposal = /proposal/i.test(String(o.stage||""));
+        const subEl = root.querySelector('[data-field="submissionDate"]')?.closest('div');
+        if(subEl) subEl.style.display = isProposal ? "" : "none";
+      };
+      applyHeatbar(root, o.stage);
+      root.querySelectorAll("[data-field]").forEach(el=>{
+        const field = el.getAttribute("data-field");
+        const handler = ()=>{
+          let val = (el.tagName==="TEXTAREA" || el.tagName==="INPUT") ? el.value : el.textContent;
+          if(field==="dlop") val = currencyToNumber(val);
+          o[field] = val;
+          renderTotalsOnly();
+          if(field==="stage"){ toggleSubmission(); applyHeatbar(root, o.stage); }
+        };
+        if(el.tagName==="TEXTAREA") el.addEventListener("input", handler);
+        else if(el.tagName==="INPUT") el.addEventListener("change", handler);
+        else el.addEventListener("input", handler);
+      });
+      toggleSubmission();
+    }
+    function bindInlineCard(o){
+      const root = document.getElementById("card-"+o.id);
+      bindCardRoot(root, o);
+      if(root){
+        root.addEventListener("click", (ev)=>{
+          const t = ev.target;
+          if(t.closest("input") || t.closest("textarea") || t.closest("button")) return;
+          openCardModal(o);
+        });
       }
     }
-    if(cur) flush();
-    return blocks;
-  }
-};
-$("btnImport").addEventListener("click", ()=> imp.open());
-$("impClose").addEventListener("click", ()=> imp.close());
-$("impPreview").addEventListener("click", ()=>{
-  try{
-    const blocks = imp.parse(imp.text.value);
-    if(!blocks.length){ imp.out.textContent = "No records found. Check your formatting (blank line between records)."; return; }
-    imp.out.innerHTML = blocks.slice(0,20).map(b=>`• <b>${escapeHtml(b.name)}</b> — $${(b.dlop||0).toLocaleString()} — ${escapeHtml(b.stage||"")}`).join("<br>")
-      + (blocks.length>20 ? `<div style='color:#9fb0d0'>…and ${blocks.length-20} more</div>`:"");
-  }catch(err){ imp.out.textContent = "Preview error: " + (err.message||err); }
-});
-$("impApply").addEventListener("click", ()=>{
-  const blocks = imp.parse(imp.text.value);
-  if(!blocks.length){ alert("Nothing to import."); return; }
-  const r = state.regions.find(rr=> rr.id===activeRegionId);
-  const norm = s => String(s||"").toLowerCase().replace(/[–—]/g,"-").trim();
-  const map = new Map(r.opportunities.map(o=> [norm(o.name), o]));
-  let updates=0, adds=0;
-  blocks.forEach(b=>{
-    const key = norm(b.name);
-    const tgt = map.get(key);
-    if(tgt){ if(b.dlop) tgt.dlop=b.dlop; if(b.stage) tgt.stage=b.stage; if(b.service) tgt.service=b.service; if(b.notes) tgt.notes=b.notes; updates++; }
-    else { r.opportunities.push({ id:"op-"+Math.random().toString(36).slice(2,9), name:b.name, stage:b.stage, dlop:b.dlop||0, service:b.service, notes:b.notes, attachments:[] }); adds++; }
+    function cardHtmlLarge(o){
+      const isProposal = /proposal/i.test(String(o.stage||""));
+      return `
+        <div class="card card--large">
+          <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
+          <div class="heatbar"><div class="fill"></div></div>
+          <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
+          <div class="row2" style="margin-top:6px">
+            <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
+            <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
+            <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
+            <div ${isProposal? "":"style='display:none'"}><label>Submission Date</label><input class="field" data-field="submissionDate" value="${escapeHtml(o.submissionDate||"")}"></div>
+          </div>
+          <div style="margin-top:6px">
+            <label>Notes / Last Interaction</label>
+            <textarea class="field" rows="8" data-field="notes">${escapeHtml(o.notes||"")}</textarea>
+          </div>
+        </div>`;
+    }
+
+    /* Modal open/close */
+    function openCardModal(o){
+      const m = $("cardModal");
+      const body = $("cardModalBody");
+      body.innerHTML = cardHtmlLarge(o);
+      bindCardRoot(body.querySelector(".card"), o);
+      m.style.display="flex";
+      requestAnimationFrame(()=> m.classList.add("show"));
+    }
+    $("btnCloseCard").addEventListener("click", ()=>{
+      const m = $("cardModal"); m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180);
+    });
+    $("cardModal").addEventListener("click", (e)=>{
+      if(e.target.id==="cardModal"){ const m=e.currentTarget; m.classList.remove("show"); setTimeout(()=> m.style.display="none", 180); }
+    });
+
+    /* New card template */
+    const addCard = `
+      <div class="card add-card">
+        <div class="card-head"><h3>New Opportunity</h3></div>
+        <div class="add-row">
+          <div><label>Name</label><input class="field" id="add_name" placeholder="Opportunity name"></div>
+          <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Win / Lost"></div>
+          <div><label>DLOP</label><input class="field" id="add_dlop" placeholder="$0"></div>
+          <div><label>Service</label><input class="field" id="add_service" placeholder="Self-Park / Valet / Vehicle Services"></div>
+        </div>
+        <div style="margin-top:6px">
+          <label>Notes / Last Interaction</label>
+          <textarea class="field" id="add_notes" rows="2" placeholder="Your note..."></textarea>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn" id="add_btn">Add Opportunity</button>
+        </div>
+      </div>
+    `;
+
+    /* Render */
+    function render(){
+      const r = state.regions.find(rr=> rr.id===activeRegionId);
+      const q = (sidebarQuery||"").toLowerCase();
+      let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
+      const stageSel = $("stageFilter");
+      if(stageSel && stageSel.value !== "all"){
+        const sel = stageSel.value.toLowerCase();
+        items = items.filter(o => {
+          const st = String(o.stage||"").toLowerCase();
+          if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+          if(sel === "lost") return st.includes("lost");
+          if(sel === "win") return st.includes("win");
+          return st === sel;
+        });
+      }
+      // Sidebar
+      $("list").innerHTML = items.map(o=>`<div class="item" data-jump="${o.id}">${escapeHtml(o.name||"(no name)")}</div>`).join("");
+      $("list").querySelectorAll("[data-jump]").forEach(el=> el.addEventListener("click", ()=>{
+        const id = el.getAttribute("data-jump"); const t = document.getElementById("card-"+id);
+        if(t) t.scrollIntoView({behavior:"smooth", block:"center"});
+      }));
+      // Cards
+      const elCards = $("cards");
+      elCards.innerHTML = addCard + items.map(cardHtml).join("");
+      const addBtn = $("add_btn");
+      if(addBtn){
+        addBtn.addEventListener("click", ()=>{
+          const name = ($("add_name")||{}).value||"";
+          if(!name.trim()){ alert("Please enter a name."); return; }
+          const stage = ($("add_stage")||{}).value||"";
+          const dlopS = ($("add_dlop")||{}).value||"";
+          const service = ($("add_service")||{}).value||"";
+          const notes = ($("add_notes")||{}).value||"";
+          const dlop = (function(s){ s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; })(dlopS);
+          const r = state.regions.find(rr=> rr.id===activeRegionId);
+          const newItem = { id:"op-"+Math.random().toString(36).slice(2,9), name, stage, dlop, service, notes, attachments:[] };
+          r.opportunities.unshift(newItem);
+          render();
+          const newEl = document.getElementById("card-"+newItem.id);
+          if(newEl) newEl.scrollIntoView({behavior:"smooth", block:"center"});
+        });
+      }
+      items.forEach(bindInlineCard);
+      renderTotalsOnly();
+    }
+
+    /* ===== Cloud save/load helpers ===== */
+    async function saveToCloud(){
+      if(!db || !docRef){
+        alert("Firebase is not configured yet. Please check firebaseConfig in the HTML.");
+        return;
+      }
+      try{
+        await setDoc(docRef, { regions: state.regions });
+        alert("Saved to shared cloud report.");
+      }catch(e){
+        console.error("Cloud save error:", e);
+        alert("Unable to save to cloud: " + (e.message || e));
+      }
+    }
+
+    async function loadFromCloud(showAlert){
+      if(!db || !docRef){
+        console.warn("Firebase not configured; using default in-page data.");
+        render();
+        return;
+      }
+      try{
+        const snap = await getDoc(docRef);
+        if(snap.exists()){
+          const data = snap.data();
+          if(data && Array.isArray(data.regions)){
+            state.regions = data.regions;
+            if(showAlert) alert("Reloaded from shared cloud report.");
+          }else if(showAlert){
+            alert("Cloud data found but in unexpected format. Using defaults.");
+          }
+        }else if(showAlert){
+          alert("No saved cloud snapshot yet. Using defaults.");
+        }
+      }catch(e){
+        console.error("Cloud load error:", e);
+        if(showAlert) alert("Unable to load from cloud: " + (e.message || e));
+      }
+      render();
+    }
+
+    /* Toolbar actions */
+    $("btnSave").addEventListener("click", ()=>{ saveToCloud(); });
+    $("btnReset").addEventListener("click", ()=>{ loadFromCloud(true); });
+
+    function regionToRows(region){
+      return region.opportunities.map(o=>({Region:region.name, Name:o.name||"", DLOP:currencyToNumber(o.dlop)||0, Service:o.service||"", Stage:o.stage||"", Notes:(o.notes||"").replace(/\n/g," ")}));
+    }
+    function escapeXml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+    function buildHtmlTable(rows){
+      const head = '<tr><th>Region</th><th>Name</th><th>DLOP</th><th>Service</th><th>Stage</th><th>Notes</th></tr>';
+      const body = rows.map(r=> `<tr>
+        <td>${escapeXml(r.Region)}</td>
+        <td>${escapeXml(r.Name)}</td>
+        <td>${r.DLOP}</td>
+        <td>${escapeXml(r.Service)}</td>
+        <td>${escapeXml(r.Stage)}</td>
+        <td>${escapeXml(r.Notes)}</td>
+      </tr>`).join("");
+      return `<table border="1" cellspacing="0" cellpadding="4">${head}${body}</table>`;
+    }
+    function exportWord(){
+      const rowsMid = regionToRows(state.regions.find(r=>r.id==="mid"));
+      const rowsPa  = regionToRows(state.regions.find(r=>r.id==="pa"));
+      const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
+        <h1>LEO’s Opportunity Snapshot Report</h1>
+        <h2>Mid-Atlantic</h2>${buildHtmlTable(rowsMid)}
+        <h2>Pennsylvania</h2>${buildHtmlTable(rowsPa)}
+      </body></html>`;
+      const blob = new Blob([html], {type:"application/msword"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.doc";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    function exportExcel(){
+      const rows = [...regionToRows(state.regions.find(r=>r.id==="mid")), ...regionToRows(state.regions.find(r=>r.id==="pa"))];
+      const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${buildHtmlTable(rows)}</body></html>`;
+      const blob = new Blob([html], {type:"application/vnd.ms-excel"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href=url; a.download="LEOS_Opportunity_Snapshot_Report.xls";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    $("btnWord").addEventListener("click", exportWord);
+    $("btnExcel").addEventListener("click", exportExcel);
+
+    /* Import modal (paste/txt only) */
+    const imp = {
+      el: $("impModal"),
+      text: $("impText"),
+      out: $("impOut"),
+      open(){ this.el.style.display="flex"; },
+      close(){ this.el.style.display="none"; },
+      parse(text){
+        const lines = String(text||"").replace(/\r/g,"").split("\n").map(s=>s.trim());
+        const blocks=[]; let cur=null;
+        const isLabel = s => /^stage:|^dlop:|^service:|^notes/i.test(s);
+        const getVal = s => s.split(":").slice(1).join(":").trim();
+        function toNumber(s){ if(!s) return 0; s=String(s); s=s.replace(/[^\d.]/g,""); if((s.match(/\./g)||[]).length>1){ const p=s.split("."); s=p.slice(0,-1).join("")+"."+p.slice(-1)[0]; } const n=parseFloat(s); return isNaN(n)?0:n; }
+        function flush(){ if(cur && cur.name) blocks.push(cur); cur=null; }
+        function start(name){ cur={name, stage:"", dlop:0, service:"", notes:""}; }
+        for(let i=0;i<lines.length;i++){
+          const L=lines[i]; if(!L){ continue; }
+          if(!isLabel(L)){ if(cur && (cur.stage||cur.service||cur.dlop||cur.notes)) flush(); start(L); }
+          else if(cur){
+            if(/^stage:/i.test(L)) cur.stage=getVal(L);
+            else if(/^dlop:/i.test(L)) cur.dlop=toNumber(getVal(L));
+            else if(/^service:/i.test(L)) cur.service=getVal(L);
+            else if(/^notes/i.test(L)){ cur.notes=getVal(L); }
+          }
+        }
+        if(cur) flush();
+        return blocks;
+      }
+    };
+    $("btnImport").addEventListener("click", ()=> imp.open());
+    $("impClose").addEventListener("click", ()=> imp.close());
+    $("impPreview").addEventListener("click", ()=>{
+      try{
+        const blocks = imp.parse(imp.text.value);
+        if(!blocks.length){ imp.out.textContent = "No records found. Check your formatting (blank line between records)."; return; }
+        imp.out.innerHTML = blocks.slice(0,20).map(b=>`• <b>${escapeHtml(b.name)}</b> — $${(b.dlop||0).toLocaleString()} — ${escapeHtml(b.stage||"")}`).join("<br>")
+          + (blocks.length>20 ? `<div style='color:#9fb0d0'>…and ${blocks.length-20} more</div>`:"");
+      }catch(err){ imp.out.textContent = "Preview error: " + (err.message||err); }
+    });
+    $("impApply").addEventListener("click", ()=>{
+      const blocks = imp.parse(imp.text.value);
+      if(!blocks.length){ alert("Nothing to import."); return; }
+      const r = state.regions.find(rr=> rr.id===activeRegionId);
+      const norm = s => String(s||"").toLowerCase().replace(/[–—]/g,"-").trim();
+      const map = new Map(r.opportunities.map(o=> [norm(o.name), o]));
+      let updates=0, adds=0;
+      blocks.forEach(b=>{
+        const key = norm(b.name);
+        const tgt = map.get(key);
+        if(tgt){ if(b.dlop) tgt.dlop=b.dlop; if(b.stage) tgt.stage=b.stage; if(b.service) tgt.service=b.service; if(b.notes) tgt.notes=b.notes; updates++; }
+        else { r.opportunities.push({ id:"op-"+Math.random().toString(36).slice(2,9), name:b.name, stage:b.stage, dlop:b.dlop||0, service:b.service, notes:b.notes, attachments:[] }); adds++; }
+      });
+      render();
+      imp.out.innerHTML = `✅ Imported ${updates} updated, ${adds} new.`;
+    });
+
+    /* Tabs & filters */
+    $("tab-mid").addEventListener("click", ()=>{ activeRegionId="mid"; $("tab-mid").classList.add("active"); $("tab-pa").classList.remove("active"); render(); });
+    $("tab-pa").addEventListener("click",  ()=>{ activeRegionId="pa";  $("tab-pa").classList.add("active");  $("tab-mid").classList.remove("active"); render(); });
+    $("search").addEventListener("input", (e)=>{ sidebarQuery=e.target.value; render(); });
+    $("stageFilter").addEventListener("change", ()=> render());
+
+    /* Clear entire report */
+    $("btnClear").addEventListener("click", async ()=>{
+      if(!confirm("Clear ALL opportunities for BOTH regions? This will also overwrite the cloud copy.")) return;
+      state.regions.forEach(r=> r.opportunities = []);
+      render();
+      if(db && docRef){
+        try{
+          await setDoc(docRef, { regions: state.regions });
+          alert("Report cleared and saved to cloud.");
+        }catch(e){
+          console.error("Cloud clear error:", e);
+          alert("Cleared locally but could not update cloud: " + (e.message || e));
+        }
+      }else{
+        alert("Cleared locally. (Cloud not configured.)");
+      }
+    });
+
+    /* Initial load: try cloud, fall back to defaults */
+    loadFromCloud(false);
   });
-  try{ localStorage.setItem(LS_LAST, JSON.stringify(state)); }catch(e){}
-  render();
-  imp.out.innerHTML = `✅ Imported ${updates} updated, ${adds} new.`;
-});
-
-/* Tabs & filters */
-$("tab-mid").addEventListener("click", ()=>{ activeRegionId="mid"; $("tab-mid").classList.add("active"); $("tab-pa").classList.remove("active"); render(); });
-$("tab-pa").addEventListener("click",  ()=>{ activeRegionId="pa";  $("tab-pa").classList.add("active");  $("tab-mid").classList.remove("active"); render(); });
-$("search").addEventListener("input", (e)=>{ sidebarQuery=e.target.value; render(); });
-$("stageFilter").addEventListener("change", ()=> render());
-
-/* Prefer last snapshot */
-try{
-  const persisted = localStorage.getItem(LS_LAST);
-  if(persisted){
-    const parsed = JSON.parse(persisted);
-    if(parsed && parsed.regions){ state.regions = parsed.regions; }
-  }
-}catch(e){}
-
-render();
-
-/* Clear entire report */
-$("btnClear").addEventListener("click", ()=>{
-  if(!confirm("Clear ALL opportunities for BOTH regions? This cannot be undone (unless you previously Saved).")) return;
-  state.regions.forEach(r=> r.opportunities = []);
-  try{ localStorage.removeItem(LS_LAST); }catch(e){}
-  render();
-  alert("Report cleared.");
-});
-}); // DOMContentLoaded
 </script>
 </body>
 </html>
