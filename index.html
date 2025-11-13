@@ -10,48 +10,27 @@
   body::before{ content:""; position:fixed; inset:0; z-index:-1; background:#000; opacity:0.15; pointer-events:none; }
   header{ position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#0B1022,#0a1230); border-bottom:1px solid #1f2d57; }
   .row{ max-width:1200px; margin:0 auto; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+
+  /* brand block with logo + title */
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-logo{
+    height:40px;
+    width:auto;
+    display:block;
+  }
+
   h1{ margin:0; font-size:26px; letter-spacing:.3px; }
   .toolbar{ max-width:1200px; margin:8px auto 0; display:flex; align-items:center; gap:10px; padding:0 14px 10px; justify-content:space-between; }
   .btns{ display:flex; gap:8px; flex-wrap:wrap; }
   .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
   .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
-
-  /* Icon container */
-  .btn-icon{
-    width:20px;
-    height:20px;
-    margin-right:4px;
-    flex-shrink:0;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .btn-icon svg{
-    width:100%;
-    height:100%;
-    display:block;
-    stroke:currentColor;
-    fill:none;
-    stroke-width:1.7;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-  }
-
   #totalChip{ font-weight:800; font-size:22px; color:#dbe6ff; text-shadow:0 0 8px rgba(90,140,240,.15); }
-  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:flex-start; }
-
+  .wrap{ max-width:1200px; margin:14px auto; display:grid; grid-template-columns:280px 1fr; gap:16px; }
   aside, main{ background:var(--panel); border:1px solid var(--bord); border-radius:14px; padding:12px; }
-
-  /* Make the whole sidebar box (tabs + search + legend + list) sticky */
-  aside{
-    position:sticky;
-    top:96px; /* below header + toolbar */
-    max-height:calc(100vh - 110px);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-  }
-
   .tabs{ display:flex; gap:8px; margin-bottom:8px; }
   .tab{ padding:6px 10px; border:1px solid #1D2B4F; border-radius:10px; cursor:pointer; }
   .tab.active{ background:#10204A; }
@@ -64,12 +43,7 @@
   label{ font-size:12px; color:var(--sub); display:block; margin:4px 0 4px; letter-spacing:.2px; }
   input[data-field="dlop"]{ text-align:right; }
 
-  .list{
-    margin-top:6px;
-    max-height:100%;
-    overflow:auto;
-    border-top:1px dashed var(--bord);
-  }
+  .list{ max-height: calc(100vh - 280px); overflow:auto; border-top:1px dashed var(--bord); }
   .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
   .list .item:hover{ background:#0E1530; }
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
@@ -116,84 +90,20 @@
 <body>
 <header>
   <div class="row">
-    <h1>LEO’s Opportunity Snapshot Report</h1>
+    <div class="brand">
+      <!-- update the src to your actual logo filename if needed -->
+      <img src="laz-logo.png" alt="LAZ Parking" class="brand-logo">
+      <h1>LEO’s Opportunity Snapshot Report</h1>
+    </div>
   </div>
   <div class="toolbar">
     <div class="btns">
-      <!-- Word -->
-      <button id="btnWord" class="btn" title="Export Word">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="5" y="3" width="14" height="18" rx="2"></rect>
-            <path d="M9 8l1.5 7L12 11l1.5 4L15 8"></path>
-          </svg>
-        </span>
-        <span>Word</span>
-      </button>
-
-      <!-- Excel -->
-      <button id="btnExcel" class="btn" title="Export Excel">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-            <path d="M10 4v16"></path>
-            <path d="M4 10h16"></path>
-            <path d="M13 9l3 6"></path>
-            <path d="M16 9l-3 6"></path>
-          </svg>
-        </span>
-        <span>Excel</span>
-      </button>
-
-      <!-- Import -->
-      <button id="btnImport" class="btn" title="Import Opportunities">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3v12"></path>
-            <path d="M8 11l4 4 4-4"></path>
-            <path d="M4 19h16"></path>
-          </svg>
-        </span>
-        <span>Import</span>
-      </button>
-
-      <!-- Save -->
-      <button id="btnSave" class="btn" title="Save Report">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M5 4h11l3 3v13H5z"></path>
-            <path d="M9 4v6h6V4z"></path>
-            <path d="M9 18h6"></path>
-          </svg>
-        </span>
-        <span>Save</span>
-      </button>
-
-      <!-- Reset -->
-      <button id="btnReset" class="btn" title="Reset to Last Save">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M10 4H5v5"></path>
-            <path d="M5 4l3 3.5"></path>
-            <path d="M6 13a7 7 0 1 0 2-5"></path>
-          </svg>
-        </span>
-        <span>Reset</span>
-      </button>
-
-      <!-- Clear -->
-      <button id="btnClear" class="btn" title="Clear Entire Report">
-        <span class="btn-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M4 7h16"></path>
-            <path d="M10 4h4"></path>
-            <path d="M6 7l1 13h10l1-13"></path>
-            <path d="M10 11v6"></path>
-            <path d="M14 11v6"></path>
-          </svg>
-        </span>
-        <span>Clear</span>
-      </button>
+      <button id="btnWord" class="btn" title="Export Word">Word</button>
+      <button id="btnExcel" class="btn" title="Export Excel">Excel</button>
+      <button id="btnImport" class="btn" title="Import Opportunities">Import</button>
+      <button id="btnSave" class="btn" title="Save Report">Save</button>
+      <button id="btnReset" class="btn" title="Reset to Last Save">Reset</button>
+      <button id="btnClear" class="btn" title="Clear Entire Report">Clear</button>
     </div>
     <span id="totalChip">Total DLOP: $0</span>
   </div>
@@ -325,20 +235,7 @@ function applyHeatbar(rootEl, stageText){
 function renderTotalsOnly(){
   const r = state.regions.find(rr=> rr.id===activeRegionId);
   const q = (sidebarQuery||"").toLowerCase();
-  let items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
-
-  const stageSel = $("stageFilter");
-  if(stageSel && stageSel.value !== "all"){
-    const sel = stageSel.value.toLowerCase();
-    items = items.filter(o => {
-      const st = String(o.stage||"").toLowerCase();
-      if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
-      if(sel === "lost") return st.includes("lost");
-      if(sel === "win") return st.includes("win");
-      return st === sel;
-    });
-  }
-
+  const items = r.opportunities.filter(o=> (o.name||"").toLowerCase().includes(q) || (o.notes||"").toLowerCase().includes(q));
   const total = items.reduce((a,o)=> a + currencyToNumber(o.dlop), 0);
   $("totalChip").textContent = "Total DLOP: " + numberToCurrency(total);
 }
