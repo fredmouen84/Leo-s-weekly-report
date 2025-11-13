@@ -28,10 +28,10 @@
 
   aside, main{ background:var(--panel); border:1px solid var(--bord); border-radius:14px; padding:12px; }
 
-  /* SIDEBAR STATIC / STICKY */
+  /* SIDEBAR STICKY */
   aside{
     position:sticky;
-    top:96px; /* just below the header/toolbar */
+    top:96px; /* sits under header+toolbar */
     display:flex;
     flex-direction:column;
     max-height:calc(100vh - 110px);
@@ -57,6 +57,7 @@
   }
   .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
   .list .item:hover{ background:#0E1530; }
+
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
   .card{ background:#0D1328; border:1px solid #1B2A4B; border-radius:14px; padding:12px; transition:transform .12s, box-shadow .12s, border-color .12s; }
   .card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(38,74,154,.35) inset; border-color:var(--acc); cursor:pointer; }
