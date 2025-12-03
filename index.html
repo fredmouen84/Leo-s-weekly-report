@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html>
 <head>
@@ -85,6 +86,7 @@
   .heat--prospecting .fill{ background:#3B82F6; box-shadow:0 0 10px rgba(59,130,246,.45); }
   .heat--working .fill{ background:#FBBF24; box-shadow:0 0 10px rgba(251,191,36,.38); }
   .heat--proposal .fill{ background:#8B5CF6; box-shadow:0 0 10px rgba(139,92,246,.42); }
+  .heat--approval .fill{ background:#FB923C; box-shadow:0 0 10px rgba(251,146,60,.45); }  /* NEW: Deal Approval (orange) */
   .heat--won .fill{ background:#10B981; box-shadow:0 0 10px rgba(16,185,129,.45); }
   .heat--lost .fill{ background:#4B5563; box-shadow:none; opacity:.45; }
   .heatrow{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px; }
@@ -97,8 +99,12 @@
   .legend-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; }
   .legend-item{ display:flex; align-items:center; gap:8px; font-size:12px; color:#DDE9FF; }
   .swatch{ width:22px; height:6px; border-radius:999px; box-shadow:0 0 6px rgba(255,255,255,.08) inset; }
-  .swatch.prospecting{ background:#3B82F6; } .swatch.working{ background:#FBBF24; }
-  .swatch.proposal{ background:#8B5CF6; } .swatch.won{ background:#10B981; } .swatch.lost{ background:#4B5563; opacity:.7; }
+  .swatch.prospecting{ background:#3B82F6; }
+  .swatch.working{ background:#FBBF24; }
+  .swatch.proposal{ background:#8B5CF6; }
+  .swatch.approval{ background:#FB923C; }   /* NEW: Deal Approval swatch */
+  .swatch.won{ background:#10B981; }
+  .swatch.lost{ background:#4B5563; opacity:.7; }
 
   /* Modal */
   #cardModal{ position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:100; opacity:0; transform:scale(0.98); transition:opacity .18s, transform .18s; }
@@ -238,6 +244,7 @@
       <option value="prospecting">Prospecting</option>
       <option value="working on">Working on</option>
       <option value="proposal">Proposal</option>
+      <option value="approval">Deal Approval</option>  <!-- NEW -->
       <option value="win">Win</option>
       <option value="lost">Lost</option>
     </select>
@@ -248,6 +255,7 @@
         <div class="legend-item"><span class="swatch prospecting"></span>Prospecting</div>
         <div class="legend-item"><span class="swatch working"></span>Working On</div>
         <div class="legend-item"><span class="swatch proposal"></span>Proposal</div>
+        <div class="legend-item"><span class="swatch approval"></span>Deal Approval</div> <!-- NEW -->
         <div class="legend-item"><span class="swatch won"></span>Win</div>
         <div class="legend-item"><span class="swatch lost"></span>Lost</div>
       </div>
@@ -346,12 +354,18 @@
     /* ===== GlassBar ===== */
     function stageInfo(stageText){
       const s = String(stageText||"").toLowerCase();
+
       if (s.includes("lost"))     return { pct: 0,   cls: "heat--lost",        label: "Closed – Lost" };
       if (s.includes("win"))      return { pct: 100, cls: "heat--won",         label: "Closed – Won" };
+
+      // NEW: Deal Approval (Negotiation / Review / Approval)
+      if (s.includes("approval") || s.includes("negotiation") || s.includes("review"))
+        return { pct: 95, cls: "heat--approval", label: "Deal Approval" };
+
       if (s.includes("proposal")) return { pct: 90,  cls: "heat--proposal",    label: "Proposal" };
       if (s.includes("working"))  return { pct: 55,  cls: "heat--working",     label: "Working On" };
       if (s.includes("prospect")) return { pct: 10,  cls: "heat--prospecting", label: "Prospecting" };
-      if (s.includes("negotiation") || s.includes("review")) return { pct: 85, cls: "heat--proposal", label: "Proposal / Review" };
+
       return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
     }
     function applyHeatbar(rootEl, stageText){
@@ -381,9 +395,16 @@
         const sel = stageSel.value.toLowerCase();
         items = items.filter(o => {
           const st = String(o.stage||"").toLowerCase();
-          if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+
+          if(sel === "proposal")
+            return st.includes("proposal") && !st.includes("approval") && !st.includes("negotiation") && !st.includes("review");
+
+          if(sel === "approval")
+            return st.includes("approval") || st.includes("negotiation") || st.includes("review");
+
           if(sel === "lost") return st.includes("lost");
-          if(sel === "win") return st.includes("win");
+          if(sel === "win")  return st.includes("win");
+
           return st === sel;
         });
       }
@@ -394,7 +415,7 @@
 
     /* ===== Cards ===== */
     function cardHtml(o){
-      const isProposal = /proposal/i.test(String(o.stage||""));
+      const isProposal = /proposal|approval|negotiation|review/i.test(String(o.stage||""));
       return `
         <div class="card" id="card-${o.id}">
           <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
@@ -416,7 +437,7 @@
     function bindCardRoot(root, o){
       if(!root) return;
       const toggleSubmission = ()=>{
-        const isProposal = /proposal/i.test(String(o.stage||""));
+        const isProposal = /proposal|approval|negotiation|review/i.test(String(o.stage||""));
         const subEl = root.querySelector('[data-field="submissionDate"]')?.closest('div');
         if(subEl) subEl.style.display = isProposal ? "" : "none";
       };
@@ -448,7 +469,7 @@
       }
     }
     function cardHtmlLarge(o){
-      const isProposal = /proposal/i.test(String(o.stage||""));
+      const isProposal = /proposal|approval|negotiation|review/i.test(String(o.stage||""));
       return `
         <div class="card card--large">
           <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
@@ -489,7 +510,7 @@
         <div class="card-head"><h3>New Opportunity</h3></div>
         <div class="add-row">
           <div><label>Name</label><input class="field" id="add_name" placeholder="Opportunity name"></div>
-          <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Win / Lost"></div>
+          <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Deal Approval / Win / Lost"></div>
           <div><label>DLOP</label><input class="field" id="add_dlop" placeholder="$0"></div>
           <div><label>Service</label><input class="field" id="add_service" placeholder="Self-Park / Valet / Vehicle Services"></div>
         </div>
@@ -513,9 +534,16 @@
         const sel = stageSel.value.toLowerCase();
         items = items.filter(o => {
           const st = String(o.stage||"").toLowerCase();
-          if(sel === "proposal") return st.includes("proposal") || st.includes("negotiation") || st.includes("review");
+
+          if(sel === "proposal")
+            return st.includes("proposal") && !st.includes("approval") && !st.includes("negotiation") && !st.includes("review");
+
+          if(sel === "approval")
+            return st.includes("approval") || st.includes("negotiation") || st.includes("review");
+
           if(sel === "lost") return st.includes("lost");
-          if(sel === "win") return st.includes("win");
+          if(sel === "win")  return st.includes("win");
+
           return st === sel;
         });
       }
@@ -721,3 +749,4 @@
 </script>
 </body>
 </html>
+
