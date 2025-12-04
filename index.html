@@ -16,6 +16,21 @@
   .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
   .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
 
+  /* Smaller button variant for inline actions (delete) */
+  .btn--sm{
+    padding:4px 9px;
+    font-size:12px;
+    gap:6px;
+  }
+  .btn--danger{
+    border-color:#DC2626;
+    color:#FCA5A5;
+  }
+  .btn--danger:hover{
+    border-color:#F87171;
+    box-shadow:0 0 0 1px rgba(248,113,113,.4) inset;
+  }
+
   /* Icon container */
   .btn-icon{
     width:20px;
@@ -74,7 +89,15 @@
   .list .item:hover{ background:#0E1530; }
 
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
-  .card{ background:#0D1328; border:1px solid #1B2A4B; border-radius:14px; padding:12px; transition:transform .12s, box-shadow .12s, border-color .12s; }
+
+  .card{
+    background:#0D1328;
+    border:1px solid #1B2A4B;
+    border-radius:14px;
+    padding:16px;               /* slightly more padding */
+    transition:transform .12s, box-shadow .12s, border-color .12s;
+    min-height:210px;           /* make the box a bit “longer” */
+  }
   .card:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.35), 0 0 0 1px rgba(38,74,154,.35) inset; border-color:var(--acc); cursor:pointer; }
 
   .card .card-head{
@@ -90,21 +113,6 @@
   }
   .card .card-head h3{ margin:0; font-size:16px; }
 
-  /* Delete pill */
-  .chip-delete{
-    border:none;
-    background:transparent;
-    color:#FCA5A5;
-    font-size:13px;
-    padding:2px 8px;
-    border-radius:999px;
-    cursor:pointer;
-    flex-shrink:0;
-  }
-  .chip-delete:hover{
-    background:rgba(239,68,68,.18);
-  }
-
   /* Glass bar */
   .heatbar{ position:relative; width:100%; height:3px; border-radius:999px; background:#0b1022; border:1px solid #1D2B4F; overflow:hidden; box-shadow: inset 0 0 0 1px rgba(56,100,200,.12), 0 8px 18px rgba(0,0,0,.25); }
   .heatbar .fill{ height:100%; width:0%; border-radius:999px; transition:width .35s ease, background-color .2s ease, box-shadow .2s ease, opacity .2s ease; }
@@ -119,7 +127,7 @@
   .heatrow .stage-tag{ font-size:15px; font-weight:800; color:#cfe0ff; }
   .heatrow .pct-tag{ font-size:12px; color:#cfe0ff; opacity:.8; }
 
-  /* Row2 grid for fields (keeps Submission Date inside card) */
+  /* Row2 grid for fields (keeps Submission Date inside card cleanly) */
   .row2{
     display:grid;
     grid-template-columns:repeat(4, minmax(0,1fr));
@@ -316,7 +324,7 @@
   <div class="panel">
     <div class="modal-bar">
       <h3 style="margin:0;color:#cfe0ff">Opportunity Detail</h3>
-      <button class="btn" id="btnCloseCard">✖</button>
+      <button class="btn btn--sm" id="btnCloseCard">✖ Close</button>
     </div>
     <div id="cardModalBody"></div>
   </div>
@@ -327,7 +335,7 @@
   <div style="background:#0b0f1e;border:1px solid #16223d;border-radius:16px;max-width:960px;width:100%;padding:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="margin:0">Import Opportunities</h3>
-      <button class="btn" id="impClose">✖</button>
+      <button class="btn btn--sm" id="impClose">✖ Close</button>
     </div>
     <p style="margin:6px 0 12px 0;color:#9fb0d0">
       Format per record:<br>
@@ -508,7 +516,7 @@
         <div class="card" id="card-${o.id}">
           <div class="card-head">
             <h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3>
-            <button class="chip-delete" data-id="${o.id}" title="Delete opportunity">Delete</button>
+            <button class="btn btn--sm btn--danger" data-delete="${o.id}" title="Delete opportunity">Delete</button>
           </div>
           <div class="heatbar"><div class="fill"></div></div>
           <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
@@ -562,7 +570,7 @@
       });
 
       // Delete button
-      const del = root.querySelector(".chip-delete");
+      const del = root.querySelector('[data-delete]');
       if(del){
         del.addEventListener("click", (e)=>{
           e.stopPropagation();
@@ -577,7 +585,7 @@
         <div class="card card--large">
           <div class="card-head">
             <h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3>
-            <button class="chip-delete" data-id="${o.id}" title="Delete opportunity">Delete</button>
+            <button class="btn btn--sm btn--danger" data-delete="${o.id}" title="Delete opportunity">Delete</button>
           </div>
           <div class="heatbar"><div class="fill"></div></div>
           <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
@@ -603,7 +611,7 @@
       bindCardRoot(cardEl, o);
 
       // Wire delete in modal
-      const del = body.querySelector(".chip-delete");
+      const del = body.querySelector('[data-delete]');
       if(del){
         del.addEventListener("click", (e)=>{
           e.stopPropagation();
