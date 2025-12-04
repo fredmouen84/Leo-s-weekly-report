@@ -13,7 +13,7 @@
   h1{ margin:0; font-size:26px; letter-spacing:.3px; }
   .toolbar{ max-width:1200px; margin:8px auto 0; display:flex; align-items:center; gap:10px; padding:0 14px 10px; justify-content:space-between; flex-wrap:wrap; }
   .btns{ display:flex; gap:8px; flex-wrap:wrap; }
-  .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; }
+  .btn{ background:var(--btn); border:1px solid #1D2B4F; color:#CFE0FF; padding:8px 12px; border-radius:10px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; font-size:13px; }
   .btn:hover{ background:var(--btnh); box-shadow:0 0 0 1px rgba(56,100,200,.25) inset; }
 
   /* Icon container */
@@ -53,7 +53,7 @@
   }
 
   .tabs{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
-  .tab{ padding:6px 10px; border:1px solid #1D2B4F; border-radius:10px; cursor:pointer; }
+  .tab{ padding:6px 10px; border:1px solid #1D2B4F; border-radius:10px; cursor:pointer; font-size:13px; }
   .tab.active{ background:#10204A; }
 
   .search input, .field, textarea{
@@ -70,7 +70,7 @@
     overflow:auto;
     border-top:1px dashed var(--bord);
   }
-  .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; }
+  .list .item{ padding:10px 8px; border-bottom:1px dashed var(--bord); cursor:pointer; font-size:13px; }
   .list .item:hover{ background:#0E1530; }
 
   .grid{ display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:12px; }
@@ -86,8 +86,7 @@
   .heat--working .fill{ background:#FBBF24; box-shadow:0 0 10px rgba(251,191,36,.38); }
   .heat--proposal .fill{ background:#8B5CF6; box-shadow:0 0 10px rgba(139,92,246,.42); }
   .heat--approval .fill{ background:#FB923C; box-shadow:0 0 10px rgba(251,146,60,.45); }  /* Deal Approval (orange) */
-  .heat--client .fill{ background:#A3E635; box-shadow:0 0 10px rgba(163,230,53,.45); }   /* Client Review (yellow-green) */
-  .heat--won .fill{ background:#10B981; box-shadow:0 0 10px rgba(16,185,129,.45); }
+  .heat--won .fill{ background:#033524; box-shadow:0 0 10px rgba(3,53,36,.55); }      /* DARKER WIN GREEN */
   .heat--lost .fill{ background:#4B5563; box-shadow:none; opacity:.45; }
   .heatrow{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; margin-top:8px; }
   .heatrow .stage-tag{ font-size:15px; font-weight:800; color:#cfe0ff; }
@@ -102,10 +101,22 @@
   .swatch.prospecting{ background:#3B82F6; }
   .swatch.working{ background:#FBBF24; }
   .swatch.proposal{ background:#8B5CF6; }
-  .swatch.approval{ background:#FB923C; }
-  .swatch.client{ background:#A3E635; }   /* Client Review swatch */
-  .swatch.won{ background:#10B981; }
+  .swatch.approval{ background:#FB923C; }   /* Deal Approval swatch */
+  .swatch.won{ background:#033524; }        /* Match darker WIN color */
   .swatch.lost{ background:#4B5563; opacity:.7; }
+
+  /* Small delete button variation */
+  .btn-delete{
+    padding:4px 8px;
+    font-size:11px;
+    border-radius:999px;
+    opacity:0.85;
+  }
+  .btn-delete:hover{
+    opacity:1;
+    background:#7F1D1D;
+    border-color:#B91C1C;
+  }
 
   /* Modal */
   #cardModal{ position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:100; opacity:0; transform:scale(0.98); transition:opacity .18s, transform .18s; }
@@ -244,9 +255,8 @@
       <option value="all">All</option>
       <option value="prospecting">Prospecting</option>
       <option value="working on">Working on</option>
-      <option value="approval">Deal Approval</option>
       <option value="proposal">Proposal</option>
-      <option value="clientreview">Client Review</option>
+      <option value="approval">Deal Approval</option>
       <option value="win">Win</option>
       <option value="lost">Lost</option>
     </select>
@@ -256,9 +266,8 @@
       <div class="legend-grid">
         <div class="legend-item"><span class="swatch prospecting"></span>Prospecting</div>
         <div class="legend-item"><span class="swatch working"></span>Working On</div>
-        <div class="legend-item"><span class="swatch approval"></span>Deal Approval</div>
         <div class="legend-item"><span class="swatch proposal"></span>Proposal</div>
-        <div class="legend-item"><span class="swatch client"></span>Client Review</div>
+        <div class="legend-item"><span class="swatch approval"></span>Deal Approval</div>
         <div class="legend-item"><span class="swatch won"></span>Win</div>
         <div class="legend-item"><span class="swatch lost"></span>Lost</div>
       </div>
@@ -358,32 +367,19 @@
     function stageInfo(stageText){
       const s = String(stageText||"").toLowerCase();
 
-      // Terminal states
-      if (s.includes("lost")) return { pct: 0,   cls: "heat--lost",  label: "Closed – Lost" };
-      if (s.includes("win"))  return { pct: 100, cls: "heat--won",   label: "Closed – Won" };
+      if (s.includes("lost"))     return { pct: 0,   cls: "heat--lost",        label: "Closed – Lost" };
+      if (s.includes("win"))      return { pct: 100, cls: "heat--won",         label: "Closed – Won" };
 
-      // Client Review (very close to win)
-      if (s.includes("client review"))
-        return { pct: 95, cls: "heat--client", label: "Client Review" };
+      // Deal Approval (Negotiation / Review / Approval)
+      if (s.includes("approval") || s.includes("negotiation") || s.includes("review"))
+        return { pct: 95, cls: "heat--approval", label: "Deal Approval" };
 
-      // Deal Approval = internal approval / negotiation / (non-client) review
-      if (s.includes("approval") || s.includes("negotiation") || (s.includes("review") && !s.includes("client")))
-        return { pct: 75, cls: "heat--approval", label: "Deal Approval" };
-
-      // Proposal submitted
-      if (s.includes("proposal"))
-        return { pct: 85, cls: "heat--proposal", label: "Proposal" };
-
-      // Earlier stages
-      if (s.includes("working"))
-        return { pct: 55, cls: "heat--working", label: "Working On" };
-
-      if (s.includes("prospect"))
-        return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
+      if (s.includes("proposal")) return { pct: 90,  cls: "heat--proposal",    label: "Proposal" };
+      if (s.includes("working"))  return { pct: 55,  cls: "heat--working",     label: "Working On" };
+      if (s.includes("prospect")) return { pct: 10,  cls: "heat--prospecting", label: "Prospecting" };
 
       return { pct: 10, cls: "heat--prospecting", label: "Prospecting" };
     }
-
     function applyHeatbar(rootEl, stageText){
       const hb = rootEl.querySelector(".heatbar");
       if(!hb) return;
@@ -412,22 +408,11 @@
         items = items.filter(o => {
           const st = String(o.stage||"").toLowerCase();
 
-          // Proposal only (not approval / review)
           if(sel === "proposal")
-            return st.includes("proposal") &&
-                   !st.includes("approval") &&
-                   !st.includes("negotiation") &&
-                   !st.includes("review");
+            return st.includes("proposal") && !st.includes("approval") && !st.includes("negotiation") && !st.includes("review");
 
-          // Deal Approval group
           if(sel === "approval")
-            return st.includes("approval") ||
-                   st.includes("negotiation") ||
-                   (st.includes("review") && !st.includes("client"));
-
-          // Client Review only
-          if(sel === "clientreview")
-            return st.includes("client review");
+            return st.includes("approval") || st.includes("negotiation") || st.includes("review");
 
           if(sel === "lost") return st.includes("lost");
           if(sel === "win")  return st.includes("win");
@@ -448,7 +433,7 @@
           <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
           <div class="heatbar"><div class="fill"></div></div>
           <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
-          <div class="row2" style="margin-top:6px">
+          <div class="row2" style="margin-top:6px;display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px">
             <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
             <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
             <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
@@ -458,10 +443,12 @@
             <label>Notes / Last Interaction</label>
             <textarea class="field" data-field="notes" rows="3">${escapeHtml(o.notes||"")}</textarea>
           </div>
+          <div style="margin-top:8px;display:flex;justify-content:flex-end">
+            <button class="btn btn-delete" type="button" data-delete-id="${o.id}">Delete</button>
+          </div>
         </div>
       `;
     }
-
     function bindCardRoot(root, o){
       if(!root) return;
       const toggleSubmission = ()=>{
@@ -485,7 +472,6 @@
       });
       toggleSubmission();
     }
-
     function bindInlineCard(o){
       const root = document.getElementById("card-"+o.id);
       bindCardRoot(root, o);
@@ -497,7 +483,6 @@
         });
       }
     }
-
     function cardHtmlLarge(o){
       const isProposal = /proposal|approval|negotiation|review/i.test(String(o.stage||""));
       return `
@@ -505,7 +490,7 @@
           <div class="card-head"><h3 contenteditable="true" data-field="name">${escapeHtml(o.name||"(no name)")}</h3></div>
           <div class="heatbar"><div class="fill"></div></div>
           <div class="heatrow"><span class="stage-tag"></span><span class="pct-tag"></span></div>
-          <div class="row2" style="margin-top:6px">
+          <div class="row2" style="margin-top:6px;display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px">
             <div><label>Stage</label><input class="field" data-field="stage" value="${escapeHtml(o.stage||"")}"></div>
             <div><label>DLOP</label><input class="field" data-field="dlop" value="${o.dlop? numberToCurrency(o.dlop): ""}"></div>
             <div><label>Service</label><input class="field" data-field="service" value="${escapeHtml(o.service||"")}"></div>
@@ -540,7 +525,7 @@
         <div class="card-head"><h3>New Opportunity</h3></div>
         <div class="add-row">
           <div><label>Name</label><input class="field" id="add_name" placeholder="Opportunity name"></div>
-          <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Deal Approval / Proposal / Client Review / Win / Lost"></div>
+          <div><label>Stage</label><input class="field" id="add_stage" placeholder="Prospecting / Working On / Proposal / Deal Approval / Win / Lost"></div>
           <div><label>DLOP</label><input class="field" id="add_dlop" placeholder="$0"></div>
           <div><label>Service</label><input class="field" id="add_service" placeholder="Self-Park / Valet / Vehicle Services"></div>
         </div>
@@ -548,8 +533,8 @@
           <label>Notes / Last Interaction</label>
           <textarea class="field" id="add_notes" rows="2" placeholder="Your note..."></textarea>
         </div>
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button class="btn" id="add_btn">Add Opportunity</button>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn" id="add_btn" type="button">Add Opportunity</button>
         </div>
       </div>
     `;
@@ -565,22 +550,11 @@
         items = items.filter(o => {
           const st = String(o.stage||"").toLowerCase();
 
-          // Proposal only (not approval / review)
           if(sel === "proposal")
-            return st.includes("proposal") &&
-                   !st.includes("approval") &&
-                   !st.includes("negotiation") &&
-                   !st.includes("review");
+            return st.includes("proposal") && !st.includes("approval") && !st.includes("negotiation") && !st.includes("review");
 
-          // Deal Approval group
           if(sel === "approval")
-            return st.includes("approval") ||
-                   st.includes("negotiation") ||
-                   (st.includes("review") && !st.includes("client"));
-
-          // Client Review only
-          if(sel === "clientreview")
-            return st.includes("client review");
+            return st.includes("approval") || st.includes("negotiation") || st.includes("review");
 
           if(sel === "lost") return st.includes("lost");
           if(sel === "win")  return st.includes("win");
@@ -616,6 +590,22 @@
         });
       }
       items.forEach(bindInlineCard);
+
+      // Bind delete buttons
+      document.querySelectorAll("[data-delete-id]").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          const id = btn.getAttribute("data-delete-id");
+          const region = state.regions.find(rr=> rr.id===activeRegionId);
+          if(!region) return;
+          const idx = region.opportunities.findIndex(op => op.id === id);
+          if(idx === -1) return;
+          if(!confirm("Delete this opportunity?")) return;
+          region.opportunities.splice(idx, 1);
+          render();
+        });
+      });
+
       renderTotalsOnly();
     }
 
@@ -790,6 +780,3 @@
 </script>
 </body>
 </html>
-
-
-
